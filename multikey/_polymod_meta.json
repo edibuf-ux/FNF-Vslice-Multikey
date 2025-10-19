@@ -1,0 +1,19 @@
+{
+    "title":"Multikey",
+    "description":"Adds support for 1-9K, includes some extra built-in recharts",
+    "contributors": [
+      {
+        "name": "TheZoroForce240",
+        "role": "coding, any extra assets"
+      },
+      {
+        "name": "srPerez",
+        "role": "Created the original multikey code and assets"
+      }
+    ],
+    "dependencies": {},
+    "optionalDependencies": {},
+    "api_version": "0.6.3",
+    "mod_version": "1.1.0",
+    "license": "Apache-2.0"
+}

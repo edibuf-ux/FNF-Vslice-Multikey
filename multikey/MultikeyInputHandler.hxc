@@ -1,0 +1,471 @@
+import funkin.input.PreciseInputManager;
+import funkin.modding.module.Module;
+//import flixel.util.FlxTypedSignal;
+import funkin.play.PlayState;
+import funkin.play.notes.Strumline;
+import funkin.util.Constants;
+import flixel.FlxG;
+import funkin.util.ReflectUtil;
+import haxe.Json;
+
+
+// :(
+class FlxKey {
+    static var ANY = -2;
+	static var NONE = -1;
+	static var A = 65;
+	static var B = 66;
+	static var C = 67;
+	static var D = 68;
+	static var E = 69;
+	static var F = 70;
+	static var G = 71;
+	static var H = 72;
+	static var I = 73;
+	static var J = 74;
+	static var K = 75;
+	static var L = 76;
+	static var M = 77;
+	static var N = 78;
+	static var O = 79;
+	static var P = 80;
+	static var Q = 81;
+	static var R = 82;
+	static var S = 83;
+	static var T = 84;
+	static var U = 85;
+	static var V = 86;
+	static var W = 87;
+	static var X = 88;
+	static var Y = 89;
+	static var Z = 90;
+	static var ZERO = 48;
+	static var ONE = 49;
+	static var TWO = 50;
+	static var THREE = 51;
+	static var FOUR = 52;
+	static var FIVE = 53;
+	static var SIX = 54;
+	static var SEVEN = 55;
+	static var EIGHT = 56;
+	static var NINE = 57;
+	static var PAGEUP = 33;
+	static var PAGEDOWN = 34;
+	static var HOME = 36;
+	static var END = 35;
+	static var INSERT = 45;
+	static var ESCAPE = 27;
+	static var MINUS = 189;
+	static var PLUS = 187;
+	static var DELETE = 46;
+	static var BACKSPACE = 8;
+	static var LBRACKET = 219;
+	static var RBRACKET = 221;
+	static var BACKSLASH = 220;
+	static var CAPSLOCK = 20;
+	static var SCROLL_LOCK = 145;
+	static var NUMLOCK = 144;
+	static var SEMICOLON = 186;
+	static var QUOTE = 222;
+	static var ENTER = 13;
+	static var SHIFT = 16;
+	static var COMMA = 188;
+	static var PERIOD = 190;
+	static var SLASH = 191;
+	static var GRAVEACCENT = 192;
+	static var CONTROL = 17;
+	static var ALT = 18;
+	static var SPACE = 32;
+	static var UP = 38;
+	static var DOWN = 40;
+	static var LEFT = 37;
+	static var RIGHT = 39;
+	static var TAB = 9;
+	static var WINDOWS = 15;
+	static var MENU = 302;
+	static var PRINTSCREEN = 301;
+	static var BREAK = 19;
+	static var F1 = 112;
+	static var F2 = 113;
+	static var F3 = 114;
+	static var F4 = 115;
+	static var F5 = 116;
+	static var F6 = 117;
+	static var F7 = 118;
+	static var F8 = 119;
+	static var F9 = 120;
+	static var F10 = 121;
+	static var F11 = 122;
+	static var F12 = 123;
+	static var NUMPADZERO = 96;
+	static var NUMPADONE = 97;
+	static var NUMPADTWO = 98;
+	static var NUMPADTHREE = 99;
+	static var NUMPADFOUR = 100;
+	static var NUMPADFIVE = 101;
+	static var NUMPADSIX = 102;
+	static var NUMPADSEVEN = 103;
+	static var NUMPADEIGHT = 104;
+	static var NUMPADNINE = 105;
+	static var NUMPADMINUS = 109;
+	static var NUMPADPLUS = 107;
+	static var NUMPADPERIOD = 110;
+	static var NUMPADMULTIPLY = 106;
+	static var NUMPADSLASH = 111;
+
+	static function getStringMap() {
+		var stringMap = [
+			"ANY" => -2,
+			"NONE" => -1,
+			"A" => 65,
+			"B" => 66,
+			"C" => 67,
+			"D" => 68,
+			"E" => 69,
+			"F" => 70,
+			"G" => 71,
+			"H" => 72,
+			"I" => 73,
+			"J" => 74,
+			"K" => 75,
+			"L" => 76,
+			"M" => 77,
+			"N" => 78,
+			"O" => 79,
+			"P" => 80,
+			"Q" => 81,
+			"R" => 82,
+			"S" => 83,
+			"T" => 84,
+			"U" => 85,
+			"V" => 86,
+			"W" => 87,
+			"X" => 88,
+			"Y" => 89,
+			"Z" => 90,
+			"ZERO" => 48,
+			"ONE" => 49,
+			"TWO" => 50,
+			"THREE" => 51,
+			"FOUR" => 52,
+			"FIVE" => 53,
+			"SIX" => 54,
+			"SEVEN" => 55,
+			"EIGHT" => 56,
+			"NINE" => 57,
+			"PAGEUP" => 33,
+			"PAGEDOWN" => 34,
+			"HOME" => 36,
+			"END" => 35,
+			"INSERT" => 45,
+			"ESCAPE" => 27,
+			"MINUS" => 189,
+			"PLUS" => 187,
+			"DELETE" => 46,
+			"BACKSPACE" => 8,
+			"LBRACKET" => 219,
+			"RBRACKET" => 221,
+			"BACKSLASH" => 220,
+			"CAPSLOCK" => 20,
+			"SCROLL_LOCK" => 145,
+			"NUMLOCK" => 144,
+			"SEMICOLON" => 186,
+			"QUOTE" => 222,
+			"ENTER" => 13,
+			"SHIFT" => 16,
+			"COMMA" => 188,
+			"PERIOD" => 190,
+			"SLASH" => 191,
+			"GRAVEACCENT" => 192,
+			"CONTROL" => 17,
+			"ALT" => 18,
+			"SPACE" => 32,
+			"UP" => 38,
+			"DOWN" => 40,
+			"LEFT" => 37,
+			"RIGHT" => 39,
+			"TAB" => 9,
+			"WINDOWS" => 15,
+			"MENU" => 302,
+			"PRINTSCREEN" => 301,
+			"BREAK" => 19,
+			"F1" => 112,
+			"F2" => 113,
+			"F3" => 114,
+			"F4" => 115,
+			"F5" => 116,
+			"F6" => 117,
+			"F7" => 118,
+			"F8" => 119,
+			"F9" => 120,
+			"F10" => 121,
+			"F11" => 122,
+			"F12" => 123,
+			"NUMPADZERO" => 96,
+			"NUMPADONE" => 97,
+			"NUMPADTWO" => 98,
+			"NUMPADTHREE" => 99,
+			"NUMPADFOUR" => 100,
+			"NUMPADFIVE" => 101,
+			"NUMPADSIX" => 102,
+			"NUMPADSEVEN" => 103,
+			"NUMPADEIGHT" => 104,
+			"NUMPADNINE" => 105,
+			"NUMPADMINUS" => 109,
+			"NUMPADPLUS" => 107,
+			"NUMPADPERIOD" => 110,
+			"NUMPADMULTIPLY" => 106,
+			"NUMPADSLASH" => 111,
+		];
+		return stringMap;
+	}
+}
+
+class MultikeyInputHandler extends Module
+{
+    //public var onInputPressed:FlxTypedSignal<PreciseInputEvent->Void>;
+    //public var onInputReleased:FlxTypedSignal<PreciseInputEvent->Void>;
+
+    public function new() {
+        super("MultikeyInputHandler");
+    }
+
+	//var _keyList = [FlxKey.A, FlxKey.S, FlxKey.D, FlxKey.F, FlxKey.H, FlxKey.J, FlxKey.K, FlxKey.L];
+    var _keyList = [FlxKey.S, FlxKey.D, FlxKey.F, FlxKey.SPACE, FlxKey.J, FlxKey.K, FlxKey.L];
+	var _keysHeld = [false, false, false, false, false, false, false, false, false];
+
+	function initControls() {
+		var controls = null;
+		var path = Paths.file("data/defaultMultikeyControls.json");
+        if (Assets.exists(path)) {
+            controls = Json.parse(Assets.getText(path));
+        } else {
+            throw "Missing default multikey controls json!";
+        }
+		var stringMap = FlxKey.getStringMap();
+		_keysHeld = [];
+		_keyList = [];
+		for (i in 0...Strumline.KEY_COUNT) _keysHeld.push(false);
+		for (keys in controls.keyboard[Strumline.KEY_COUNT-1]) {
+			trace(keys);
+			_keyList.push(stringMap.get(keys[0]));
+		}		
+	}
+
+    function handleKeyDown(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = _keyList.indexOf(key);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        // TODO: Remove this line with SDL3 when timestamps change meaning.
+        // This is because SDL3's timestamps are measured in nanoseconds, not milliseconds.
+        timestamp *= Constants.NS_PER_MS; // 18126000000 38367000000
+
+		if (!_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputPressQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = true;
+    }
+
+    function handleKeyUp(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = _keyList.indexOf(key);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        //trace(key);
+
+        // TODO: Remove this line with SDL3 when timestamps change meaning.
+        // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
+        timestamp *= Constants.NS_PER_MS;
+
+		if (_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputReleaseQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = false;
+    }
+
+    /*
+    function handleButtonDown(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+    {
+        var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
+
+        var buttonListEntry = _buttonList.get(gamepad.id);
+        if (buttonListEntry == null || buttonListEntry.indexOf(buttonId) == -1) return;
+
+        // TODO: Remove this line with SDL3 when timestamps change meaning.
+        // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
+        timestamp *= Constants.NS_PER_MS;
+
+        updateButtonStates(gamepad, buttonId, true);
+
+        if (getInputByButton(gamepad, buttonId)?.justPressed ?? false)
+        {
+        onInputPressed.dispatch(
+            {
+            noteDirection: getDirectionForButton(gamepad, buttonId),
+            timestamp: timestamp
+            });
+        _dirPressTimestamps.set(getDirectionForButton(gamepad, buttonId), timestamp);
+        }
+    }
+
+    function handleButtonUp(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+    {
+        var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
+
+        var buttonListEntry = _buttonList.get(gamepad.id);
+        if (buttonListEntry == null || buttonListEntry.indexOf(buttonId) == -1) return;
+
+        // TODO: Remove this line with SDL3 when timestamps change meaning.
+        // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
+        timestamp *= Constants.NS_PER_MS;
+
+        updateButtonStates(gamepad, buttonId, false);
+
+        if (getInputByButton(gamepad, buttonId)?.justReleased ?? false)
+        {
+        onInputReleased.dispatch(
+            {
+            noteDirection: getDirectionForButton(gamepad, buttonId),
+            timestamp: timestamp
+            });
+        _dirReleaseTimestamps.set(getDirectionForButton(gamepad, buttonId), timestamp);
+        }
+    }
+    */
+
+
+
+	var inPlayState:Bool = false;
+    override function onStateChangeBegin(e) {
+		if (inPlayState) {
+			FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
+        	FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
+		}
+		inPlayState = false;
+	}
+    override function onStateChangeEnd(e) {
+		if (Std.isOfType(e.targetState, PlayState)) {
+            inPlayState = true;
+			FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
+        	FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
+			initControls();
+        }
+	}
+	function onSongRetry(e) {
+		initControls();
+	}
+
+	//custom input queue
+	var inputPressQueue:Array<PreciseInputEvent> = [];
+	var inputReleaseQueue:Array<PreciseInputEvent> = [];
+
+	override function onUpdate(e) {
+		if (PlayState.instance != null && Strumline.KEY_COUNT != 4) {
+			//disable default input queue
+			PlayState.instance.inputPressQueue = [];
+      		PlayState.instance.inputReleaseQueue = [];
+
+			processInputQueue();
+		}
+	}
+
+
+	function processInputQueue():Void
+	{
+		if (inputPressQueue.length + inputReleaseQueue.length == 0) return;
+
+		// Ignore inputs during cutscenes.
+		if (PlayState.instance.isInCutscene || PlayState.instance.disableKeys)
+		{
+			inputPressQueue = [];
+			inputReleaseQueue = [];
+			return;
+		}
+
+		// Generate a list of notes within range.
+		var notesInRange:Array<NoteSprite> = PlayState.instance.playerStrumline.getNotesMayHit();
+
+		var notesByDirection:Array<Array<NoteSprite>> = [];
+		for (i in 0...Strumline.KEY_COUNT) notesByDirection.push([]);
+
+		for (note in notesInRange)
+			notesByDirection[note.direction].push(note);
+
+		while (inputPressQueue.length > 0)
+		{
+			var input:Null<PreciseInputEvent> = inputPressQueue.shift();
+			if (input == null) continue;
+
+			PlayState.instance.playerStrumline.pressKey(input.noteDirection);
+
+			// Don't credit or penalize inputs in Bot Play.
+			if (PlayState.instance.isBotPlayMode) continue;
+
+			var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
+
+			#if FEATURE_GHOST_TAPPING
+			if ((!PlayState.instance.playerStrumline.mayGhostTap()) && notesInDirection.length == 0)
+			#else
+			if (notesInDirection.length == 0)
+			#end
+			{
+				// Pressed a wrong key with no notes nearby.
+				// Perform a ghost miss (anti-spam).
+				PlayState.instance.ghostNoteMiss(input.noteDirection, notesInRange.length > 0);
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playPress(input.noteDirection);
+				//trace('PENALTY Score: ${songScore}');
+			}
+			else if (notesInDirection.length == 0)
+			{
+				// Press a key with no penalty.
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playPress(input.noteDirection);
+				//trace('NO PENALTY Score: ${songScore}');
+			}
+			else
+			{
+				// Choose the first note, deprioritizing low priority notes.
+				var targetNote:Null<NoteSprite> = notesInDirection[0]; //notesInDirection.find((note) -> !note.lowPriority);
+				if (targetNote == null) targetNote = notesInDirection[0];
+				if (targetNote == null) continue;
+
+				// Judge and hit the note.
+				// trace('Hit note! ${targetNote.noteData}');
+				PlayState.instance.goodNoteHit(targetNote, input);
+				// trace('Score: ${songScore}');
+
+				notesInDirection.remove(targetNote);
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playConfirm(input.noteDirection);
+			}
+		}
+
+		while (inputReleaseQueue.length > 0)
+		{
+			var input:Null<PreciseInputEvent> = inputReleaseQueue.shift();
+			if (input == null) continue;
+
+			// Play the strumline animation.
+			PlayState.instance.playerStrumline.playStatic(input.noteDirection);
+
+			PlayState.instance.playerStrumline.releaseKey(input.noteDirection);
+		}
+
+		PlayState.instance.playerStrumline.noteVibrations.tryNoteVibration();
+  }
+}

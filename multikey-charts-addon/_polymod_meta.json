@@ -1,0 +1,16 @@
+{
+    "title":"Multikey Charts Addon",
+    "description":"Adds an extra multikey difficulty for a few songs",
+    "contributors": [
+      {
+        "name": "TheZoroForce240",
+        "role": "recharts"
+      }
+    ],
+    "optionalDependencies": {
+      "multikey": ">=1.1.0"
+    },
+    "api_version": "0.6.3",
+    "mod_version": "1.0.0",
+    "license": "Apache-2.0"
+}

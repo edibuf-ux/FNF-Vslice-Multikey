@@ -1,0 +1,139 @@
+{
+    "strumNames": ["Left","Down","Up","Right","Space","Left","Down","Up","Right"],
+    "noteColors": ["Purple","Blue","Green","Red","White","Yellow","Violet","Darkred","Darkblue"],
+    "noteDirections": ["Left","Down","Up","Right","Space","AltLeft","AltDown","AltUp","AltRight"],
+    "notePrefix": "note",
+    "staticPrefix": "static",
+    "pressPrefix": "pressed",
+    "confirmPrefix": "confirm",
+    "keyData": [
+        {
+            "noteDirectionIndexes": [4],
+            "singDirectionIndexes": [2],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": 0,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 3],
+            "singDirectionIndexes": [0, 3],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": 0,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 4, 3],
+            "singDirectionIndexes": [0, 2, 3],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": 0,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 1, 2, 3],
+            "singDirectionIndexes": [0, 1, 2, 3],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": 0,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 1, 4, 2, 3],
+            "singDirectionIndexes": [0, 1, 2, 2, 3],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": 0,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 2, 3, 5, 1, 8],
+            "singDirectionIndexes": [0, 2, 3, 0, 1, 3],
+            "noteScale": 0.85,
+            "noteSpacing": 0.75,
+            "noteXOffset": -10,
+            "strumlineOffsets": [4, 10],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 2, 3, 4, 5, 1, 8],
+            "singDirectionIndexes": [0, 2, 3, 2, 0, 1, 3],
+            "noteScale": 0.8,
+            "noteSpacing": 0.7,
+            "noteXOffset": -20,
+            "strumlineOffsets": [5, 10],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 1, 2, 3, 5, 6, 7, 8],
+            "singDirectionIndexes": [0, 1, 2, 3, 0, 1, 2, 3],
+            "noteScale": 0.75,
+            "noteSpacing": 0.65,
+            "noteXOffset": -30,
+            "strumlineOffsets": [7, 20],
+            "splashOffsets": [0, 0]
+        },
+        {
+            "noteDirectionIndexes": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            "singDirectionIndexes": [0, 1, 2, 3, 2, 0, 1, 2, 3],
+            "noteScale": 1.0,
+            "noteSpacing": 1.0,
+            "noteXOffset": -50,
+            "strumlineOffsets": [0, 0],
+            "splashOffsets": [0, 0]
+        }
+    ],
+    "splashData": [
+        [
+            { "prefix": "purple1" },
+            { "prefix": "purple2" },
+            { "prefix": "purple3" }
+        ],
+        [
+            { "prefix": "blue1" },
+            { "prefix": "blue2" },
+            { "prefix": "blue3" }
+        ],
+        [
+            { "prefix": "green1" },
+            { "prefix": "green2" },
+            { "prefix": "green3" }
+        ],
+        [
+            { "prefix": "orange1" },
+            { "prefix": "orange2" },
+            { "prefix": "orange3" }
+        ],
+        [
+            { "prefix": "white1" },
+            { "prefix": "white2" },
+            { "prefix": "white3" }
+        ],
+        [
+            { "prefix": "yellow1" },
+            { "prefix": "yellow2" },
+            { "prefix": "yellow3" }
+        ],
+        [
+            { "prefix": "violet1" },
+            { "prefix": "violet2" },
+            { "prefix": "violet3" }
+        ],
+        [
+            { "prefix": "darkred1" },
+            { "prefix": "darkred2" },
+            { "prefix": "darkred3" }
+        ],
+        [
+            { "prefix": "darkblue1" },
+            { "prefix": "darkblue2" },
+            { "prefix": "darkblue3" }
+        ]
+    ]
+}

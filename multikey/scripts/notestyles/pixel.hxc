@@ -1,0 +1,192 @@
+import funkin.Paths;
+import funkin.graphics.FunkinSprite;
+import funkin.play.PlayState;
+import flixel.FlxG;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.notestyle.NoteStyle;
+import funkin.data.animation.AnimationDataUtil;
+import funkin.util.Constants;
+import haxe.Json;
+import funkin.util.assets.FlxAnimationUtil;
+
+class PixelNoteStyle extends NoteStyle
+{
+    public var multikeyData = null;
+	function new() {
+		super('pixel');
+
+        var path = Paths.file("data/multikeyData/" + this.id + ".json");
+        if (Assets.exists(path)) {
+            multikeyData = Json.parse(Assets.getText(path));
+        } else {
+            throw "Missing multikey data for notestyle '" + this.id + "'!";
+        }
+	}
+
+    ///////////custom functions
+
+    public inline function getKeyCountData() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1];
+    }
+    public inline function getMultikeyNoteDirectionName(dir) {
+        return multikeyData.noteDirections[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
+    public inline function getMultikeyStrumDirectionName(dir) {
+        return multikeyData.strumNames[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
+    public inline function getMultikeySingDirection(dir) {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].singDirectionIndexes[dir % Strumline.KEY_COUNT];
+    }
+    public inline function getMultikeyNoteColor(dir) {
+        return multikeyData.noteColors[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
+    public inline function getMultikeyNoteDirectionIndex(dir) {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT];
+    }
+    public inline function getMultikeySplashData(dir) {
+        return multikeyData.splashData[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
+    public inline function getMultikeyNoteScale() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteScale;
+    }
+    public inline function getMultikeyNoteSpacing() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteSpacing;
+    }
+    public inline function getMultikeyNoteXOffset() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteXOffset;
+    }
+    public inline function getMultikeySplashXOffset() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].splashOffsets[0];
+    }
+    public inline function getMultikeySplashYOffset() {
+        return multikeyData.keyData[Strumline.KEY_COUNT-1].splashOffsets[1];
+    }
+    ///////////overrides
+    
+    override function isHoldNoteCoverEnabled() {
+        if (!super.isHoldNoteCoverEnabled())
+            return false;
+        return Strumline.KEY_COUNT == 4;
+    }
+
+    override function getNoteScale() {
+        var scale = super.getNoteScale();
+        return scale * getMultikeyNoteScale();
+    }
+    override function getStrumlineScale() {
+        var scale = super.getStrumlineScale();
+        return scale * getMultikeyNoteScale();
+    }
+    override function getSplashScale() {
+        var scale = super.getSplashScale();
+        return scale * getMultikeyNoteScale();
+    }
+    override function fetchHoldNoteScale() {
+        var scale = super.fetchHoldNoteScale();
+        return scale * getMultikeyNoteScale();
+    }
+
+    override public function applyStrumlineOffsets(target) {
+        super.applyStrumlineOffsets(target);
+        target.x += getKeyCountData().strumlineOffsets[0];
+        target.y += getKeyCountData().strumlineOffsets[1];
+    }
+
+    override function getStrumlineAnimationData(dir) {
+        var noteName = getMultikeyNoteDirectionName(dir);
+        var staticName = multikeyData.staticPrefix + getMultikeyStrumDirectionName(dir);
+        var pressName = multikeyData.pressPrefix + noteName;
+        var confirmName = multikeyData.confirmPrefix + noteName;
+
+        var result = [
+            AnimationDataUtil.toNamed({prefix: staticName},"static"),
+            AnimationDataUtil.toNamed({prefix: pressName}, "press"),
+            AnimationDataUtil.toNamed({prefix: confirmName}, "confirm"),
+            AnimationDataUtil.toNamed({prefix: confirmName}, "confirm-hold")
+        ];
+
+		return result;
+    }
+
+    override function buildNoteAnimations(target) {
+        for (i in 0...Strumline.KEY_COUNT) {
+            var noteName = getMultikeyNoteDirectionName(i);
+            target.animation.addByPrefix(noteName + "Scroll", multikeyData.notePrefix + noteName);
+        }
+    }
+
+
+    override function buildHoldCoverFrames(force = false) {
+        // If the hold cover frames got unloaded, ensure they get reloaded.
+        if (holdCoverFrames?.parent?.isDestroyed ?? true) holdCoverFrames = null;
+
+        // If the hold cover frames are already loaded, just use those.
+        if (holdCoverFrames != null && !force) return holdCoverFrames;
+
+        for (direction in 0...Strumline.KEY_COUNT)
+        {
+            // We make a FlxFramesCollection here so we can combine em into one atlas later
+            var atlas = buildHoldCoverFrameForDirection(direction);
+            if (holdCoverFrames == null) holdCoverFrames = atlas;
+            else if (atlas != null) holdCoverFrames = FlxAnimationUtil.combineFramesCollections(holdCoverFrames, atlas);
+        }
+        return holdCoverFrames;
+    }
+
+    override function buildHoldCoverFrameForDirection(direction)
+    {
+        var holdCoverAssetPath:Null<String> = getHoldCoverDirectionAssetPath(direction) ?? fallback?.getHoldCoverDirectionAssetPath(direction);
+        if (holdCoverAssetPath == null)
+        {
+            FlxG.log.warn('Hold Note Cover asset path not found: ${id}');
+            return null;
+        }
+
+        if (!FunkinSprite.isTextureCached(Paths.image(holdCoverAssetPath)))
+        {
+            FlxG.log.warn('Hold Note Cover texture not cached: ${holdCoverAssetPath}');
+        }
+
+        var atlas:FlxFramesCollection = Paths.getSparrowAtlas(holdCoverAssetPath, getAssetLibrary(getHoldCoverDirectionAssetPath(direction, true)));
+        if (atlas == null) return null;
+
+        atlas.parent.persist = true;
+
+        return atlas;
+    }
+
+    override function getHoldCoverDirectionAssetPath(direction, raw = false) {
+        if (raw)
+        {
+            var rawPath = "shared:holdCover" + getMultikeyNoteColor(direction);
+
+            // we don't want to fallback directly just yet, we want to check our root assetpath first
+            if (rawPath == null) return getHoldCoverRootAssetPath(direction, true);
+            return rawPath;
+        }
+
+        var parts:Array<String> = getHoldCoverDirectionAssetPath(direction, true)?.split(Constants.LIBRARY_SEPARATOR) ?? [];
+        if (parts.length == 0) return null;
+        if (parts.length == 1) return getHoldCoverDirectionAssetPath(direction, true);
+        return parts[1];
+    }
+
+    override function fetchHoldCoverAnimationData(dir) {
+        var color = getMultikeyNoteColor(dir);
+        return [
+            AnimationDataUtil.toNamed({prefix: "holdCoverStart" + color}, "holdCoverStart" + color),
+            AnimationDataUtil.toNamed({prefix: "holdCover" + color}, "holdCover" + color),
+            AnimationDataUtil.toNamed({prefix: "holdCoverEnd" + color}, "holdCoverEnd" + color)
+        ];
+    }
+
+    override function buildSplashAnimations(target:NoteSplash):Void
+    {
+        for (i in 0...Strumline.KEY_COUNT) {
+            var animData = AnimationDataUtil.toNamedArray(getMultikeySplashData(i), "splash" + getMultikeyNoteDirectionName(i).toUpperCase());
+            for (anim in animData) {
+                FlxAnimationUtil.addAtlasAnimation(target, anim);
+            }
+        }
+    }
+}

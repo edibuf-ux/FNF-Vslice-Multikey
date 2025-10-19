@@ -1,0 +1,21 @@
+import funkin.modding.module.Module;
+import funkin.util.Constants;
+
+class MultikeyDifficultySetup extends Module
+{
+    public function new()
+    {
+        super("MultikeyDifficultySetup");
+        if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey');
+    }
+
+    override public function onStateChangeEnd(event)
+    {
+        super.onStateChangeEnd(event);
+        if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey');
+    }
+
+    public function onDestroy(e) {
+        Constants.DEFAULT_DIFFICULTY_LIST_FULL = ['easy', 'normal', 'hard', 'erect', 'nightmare'];
+    }
+}

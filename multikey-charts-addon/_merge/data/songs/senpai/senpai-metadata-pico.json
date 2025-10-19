@@ -1,0 +1,4 @@
+[
+    { "op": "add", "path": "/playData/difficulties/-", "value": "multikey" },
+    { "op": "add", "path": "/playData/ratings/multikey", "value": 8 }
+]

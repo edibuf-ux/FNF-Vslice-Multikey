@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="arrows-pixels.png">
+	<SubTexture name="staticLeft0001" x="0" y="0" width="17" height="17" />
+	<SubTexture name="staticDown0001" x="17" y="0" width="17" height="17" />
+	<SubTexture name="staticUp0001" x="34" y="0" width="17" height="17" />
+	<SubTexture name="staticRight0001" x="51" y="0" width="17" height="17" />
+	<SubTexture name="staticSpace0001" x="68" y="0" width="17" height="17" />
+
+	<SubTexture name="noteLeft0001" x="0" y="17" width="17" height="17" />
+	<SubTexture name="noteDown0001" x="17" y="17" width="17" height="17" />
+	<SubTexture name="noteUp0001" x="34" y="17" width="17" height="17" />
+	<SubTexture name="noteRight0001" x="51" y="17" width="17" height="17" />
+	<SubTexture name="noteSpace0001" x="68" y="17" width="17" height="17" />
+	<SubTexture name="noteAltLeft0001" x="85" y="17" width="17" height="17" />
+	<SubTexture name="noteAltDown0001" x="102" y="17" width="17" height="17" />
+	<SubTexture name="noteAltUp0001" x="119" y="17" width="17" height="17" />
+	<SubTexture name="noteAltRight0001" x="136" y="17" width="17" height="17" />
+
+	<SubTexture name="pressedLeft0001" x="0" y="17" width="17" height="17" />
+	<SubTexture name="pressedDown0001" x="17" y="17" width="17" height="17" />
+	<SubTexture name="pressedUp0001" x="34" y="17" width="17" height="17" />
+	<SubTexture name="pressedRight0001" x="51" y="17" width="17" height="17" />
+	<SubTexture name="pressedSpace0001" x="68" y="17" width="17" height="17" />
+	<SubTexture name="pressedAltLeft0001" x="85" y="17" width="17" height="17" />
+	<SubTexture name="pressedAltDown0001" x="102" y="17" width="17" height="17" />
+	<SubTexture name="pressedAltUp0001" x="119" y="17" width="17" height="17" />
+	<SubTexture name="pressedAltRight0001" x="136" y="17" width="17" height="17" />
+
+	<SubTexture name="pressedLeft0002" x="0" y="34" width="17" height="17" />
+	<SubTexture name="pressedDown0002" x="17" y="34" width="17" height="17" />
+	<SubTexture name="pressedUp0002" x="34" y="34" width="17" height="17" />
+	<SubTexture name="pressedRight0002" x="51" y="34" width="17" height="17" />
+	<SubTexture name="pressedSpace0002" x="68" y="34" width="17" height="17" />
+	<SubTexture name="pressedAltLeft0002" x="85" y="34" width="17" height="17" />
+	<SubTexture name="pressedAltDown0002" x="102" y="34" width="17" height="17" />
+	<SubTexture name="pressedAltUp0002" x="119" y="34" width="17" height="17" />
+	<SubTexture name="pressedAltRight0002" x="136" y="34" width="17" height="17" />
+
+	<SubTexture name="confirmLeft0001" x="0" y="51" width="17" height="17" />
+	<SubTexture name="confirmDown0001" x="17" y="51" width="17" height="17" />
+	<SubTexture name="confirmUp0001" x="34" y="51" width="17" height="17" />
+	<SubTexture name="confirmRight0001" x="51" y="51" width="17" height="17" />
+	<SubTexture name="confirmSpace0001" x="68" y="51" width="17" height="17" />
+	<SubTexture name="confirmAltLeft0001" x="85" y="51" width="17" height="17" />
+	<SubTexture name="confirmAltDown0001" x="102" y="51" width="17" height="17" />
+	<SubTexture name="confirmAltUp0001" x="119" y="51" width="17" height="17" />
+	<SubTexture name="confirmAltRight0001" x="136" y="51" width="17" height="17" />
+
+	<SubTexture name="confirmLeft0002" x="0" y="68" width="17" height="17" />
+	<SubTexture name="confirmDown0002" x="17" y="68" width="17" height="17" />
+	<SubTexture name="confirmUp0002" x="34" y="68" width="17" height="17" />
+	<SubTexture name="confirmRight0002" x="51" y="68" width="17" height="17" />
+	<SubTexture name="confirmSpace0002" x="68" y="68" width="17" height="17" />
+	<SubTexture name="confirmAltLeft0002" x="85" y="68" width="17" height="17" />
+	<SubTexture name="confirmAltDown0002" x="102" y="68" width="17" height="17" />
+	<SubTexture name="confirmAltUp0002" x="119" y="68" width="17" height="17" />
+	<SubTexture name="confirmAltRight0002" x="136" y="68" width="17" height="17" />
+</TextureAtlas>
