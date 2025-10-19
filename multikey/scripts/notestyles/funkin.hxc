@@ -46,6 +46,9 @@ class FunkinNoteStyle extends NoteStyle
     public inline function getMultikeySplashData(dir) {
         return multikeyData.splashData[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
+    public inline function getMultikeyHoldCoverData(dir) {
+        return multikeyData.holdCoverData[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
     public inline function getMultikeyNoteScale() {
         return multikeyData.keyData[Strumline.KEY_COUNT-1].noteScale;
     }
@@ -63,12 +66,6 @@ class FunkinNoteStyle extends NoteStyle
     }
 
     ///////////overrides
-    
-    override function isHoldNoteCoverEnabled() {
-        if (!super.isHoldNoteCoverEnabled())
-            return false;
-        return Strumline.KEY_COUNT == 4;
-    }
 
     override function getNoteScale() {
         var scale = super.getNoteScale();
@@ -116,26 +113,11 @@ class FunkinNoteStyle extends NoteStyle
         }
     }
 
-
-    override function buildHoldCoverFrames(force = false) {
-        // If the hold cover frames got unloaded, ensure they get reloaded.
-        if (holdCoverFrames?.parent?.isDestroyed ?? true) holdCoverFrames = null;
-
-        // If the hold cover frames are already loaded, just use those.
-        if (holdCoverFrames != null && !force) return holdCoverFrames;
-
-        for (direction in 0...Strumline.KEY_COUNT)
-        {
-            // We make a FlxFramesCollection here so we can combine em into one atlas later
-            var atlas = buildHoldCoverFrameForDirection(direction);
-            if (holdCoverFrames == null) holdCoverFrames = atlas;
-            else if (atlas != null) holdCoverFrames = FlxAnimationUtil.combineFramesCollections(holdCoverFrames, atlas);
-        }
-        return holdCoverFrames;
-    }
-
     override function buildHoldCoverFrameForDirection(direction)
     {
+        var directionData = getMultikeyHoldCoverData(direction);
+        if (directionData == null) return null;
+
         var holdCoverAssetPath:Null<String> = getHoldCoverDirectionAssetPath(direction) ?? fallback?.getHoldCoverDirectionAssetPath(direction);
         if (holdCoverAssetPath == null)
         {
@@ -159,7 +141,7 @@ class FunkinNoteStyle extends NoteStyle
     override function getHoldCoverDirectionAssetPath(direction, raw = false) {
         if (raw)
         {
-            var rawPath = "shared:holdCover" + getMultikeyNoteColor(direction);
+            var rawPath = getMultikeyHoldCoverData(direction).assetPath;
 
             // we don't want to fallback directly just yet, we want to check our root assetpath first
             if (rawPath == null) return getHoldCoverRootAssetPath(direction, true);
@@ -174,10 +156,11 @@ class FunkinNoteStyle extends NoteStyle
 
     override function fetchHoldCoverAnimationData(dir) {
         var color = getMultikeyNoteColor(dir);
+        var data = getMultikeyHoldCoverData(dir);
         return [
-            AnimationDataUtil.toNamed({prefix: "holdCoverStart" + color}, "holdCoverStart" + color),
-            AnimationDataUtil.toNamed({prefix: "holdCover" + color}, "holdCover" + color),
-            AnimationDataUtil.toNamed({prefix: "holdCoverEnd" + color}, "holdCoverEnd" + color)
+            AnimationDataUtil.toNamed(data.start, "holdCoverStart" + color),
+            AnimationDataUtil.toNamed(data.hold, "holdCover" + color),
+            AnimationDataUtil.toNamed(data.end, "holdCoverEnd" + color)
         ];
     }
 
@@ -189,5 +172,17 @@ class FunkinNoteStyle extends NoteStyle
                 FlxAnimationUtil.addAtlasAnimation(target, anim);
             }
         }
+    }
+
+    //probably not the best way of doing this, but its the easiest option while not messing with much of the cover code
+    public function forceChangeHoldCoverAnim(target, oldColor, newDir) {
+        var data = getMultikeyHoldCoverData(newDir);
+        var animData = [
+            AnimationDataUtil.toNamed(data.start, "holdCoverStart" + oldColor),
+            AnimationDataUtil.toNamed(data.hold, "holdCover" + oldColor),
+            AnimationDataUtil.toNamed(data.end, "holdCoverEnd" + oldColor)
+        ];
+        animData[1].looped = true;
+        FlxAnimationUtil.addAtlasAnimations(target.glow, animData);
     }
 }

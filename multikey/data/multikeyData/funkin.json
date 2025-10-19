@@ -126,5 +126,61 @@
             { "prefix": "note impact 1 darkblue0" },
             { "prefix": "note impact 2 darkblue0" }
         ]
+    ],
+    "holdCoverData": [
+        {
+            "assetPath": "shared:holdCoverPurple",
+            "start": { "prefix": "holdCoverStartPurple" },
+            "hold": { "prefix": "holdCoverPurple" },
+            "end": { "prefix": "holdCoverEndPurple" }
+        },
+        {
+          "assetPath": "shared:holdCoverBlue",
+          "start": { "prefix": "holdCoverStartBlue" },
+          "hold": { "prefix": "holdCoverBlue" },
+          "end": { "prefix": "holdCoverEndBlue" }
+        },
+        {
+          "assetPath": "shared:holdCoverGreen",
+          "start": { "prefix": "holdCoverStartGreen" },
+          "hold": { "prefix": "holdCoverGreen" },
+          "end": { "prefix": "holdCoverEndGreen" }
+        },
+        {
+          "assetPath": "shared:holdCoverRed",
+          "start": { "prefix": "holdCoverStartRed" },
+          "hold": { "prefix": "holdCoverRed" },
+          "end": { "prefix": "holdCoverEndRed" }
+        },
+        {
+            "assetPath": "shared:holdCoverWhite",
+            "start": { "prefix": "holdCoverStartWhite" },
+            "hold": { "prefix": "holdCoverWhite" },
+            "end": { "prefix": "holdCoverEndWhite" }
+        },
+        {
+            "assetPath": "shared:holdCoverYellow",
+            "start": { "prefix": "holdCoverStartYellow" },
+            "hold": { "prefix": "holdCoverYellow" },
+            "end": { "prefix": "holdCoverEndYellow" }
+        },
+        {
+            "assetPath": "shared:holdCoverViolet",
+            "start": { "prefix": "holdCoverStartViolet" },
+            "hold": { "prefix": "holdCoverViolet" },
+            "end": { "prefix": "holdCoverEndViolet" }
+        },
+        {
+            "assetPath": "shared:holdCoverDarkred",
+            "start": { "prefix": "holdCoverStartDarkred" },
+            "hold": { "prefix": "holdCoverDarkred" },
+            "end": { "prefix": "holdCoverEndDarkred" }
+        },
+        {
+            "assetPath": "shared:holdCoverDarkblue",
+            "start": { "prefix": "holdCoverStartDarkblue" },
+            "hold": { "prefix": "holdCoverDarkblue" },
+            "end": { "prefix": "holdCoverEndDarkblue" }
+        }
     ]
 }

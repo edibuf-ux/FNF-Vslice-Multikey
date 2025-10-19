@@ -33,6 +33,9 @@ class MultikeyStrumline extends Strumline {
 
     override function getXPos(direction):Float {
         var pos = 0;
+        #if mobile
+        if (inArrowContorlSchemeMode && isPlayer) pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        #end
         var halfKeyCount = Strumline.KEY_COUNT / 2;
         if (direction < halfKeyCount) {
             return (-pos * halfKeyCount) + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale.x) + noteXOffset;
@@ -68,16 +71,38 @@ class MultikeyStrumline extends Strumline {
         return holdNoteSprite;
     }
 
-    /*
-    var holdNoteDirections = [];
+    
     override function playNoteHoldCover(holdNote) {
-        super.playNoteHoldCover(holdNote);
-        var cover = holdNote.cover;
-        var index = noteHoldCovers.members.indexOf[cover];
-        if (index > holdNoteDirections.length-1) holdNoteDirections.push(-1);
-        holdNoteDirections[index] = holdNote.noteDirection;
+        if (!showNotesplash) return;
+        if (!noteStyle.isHoldNoteCoverEnabled()) return;
+
+        var cover:NoteHoldCover = this.constructNoteHoldCover();
+
+        if (cover != null)
+        {
+            cover.holdNote = holdNote;
+            holdNote.cover = cover;
+            cover.visible = true;
+
+            var possibleDirs = ["Purple", "Blue", "Green", "Red", "Unknown"];
+            var dirAboutToPlay = possibleDirs[Math.min(holdNote.noteDirection % Strumline.KEY_COUNT, 4)];
+            noteStyle.scriptCall("forceChangeHoldCoverAnim", [cover, dirAboutToPlay, holdNote.noteDirection % Strumline.KEY_COUNT]);
+            cover.playStart();
+
+            cover.x = this.x;
+            cover.x += getXPos(holdNote.noteDirection);
+            cover.x += Strumline.STRUMLINE_SIZE / 2;
+            cover.x -= cover.width / 2;
+            cover.x += noteStyle.getHoldCoverOffsets()[0] * cover.scale.x;
+            cover.x += -12; // hardcoded adjustment, because we are evil.
+
+            cover.y = this.y;
+            cover.y += Strumline.INITIAL_OFFSET;
+            cover.y += Strumline.STRUMLINE_SIZE / 2;
+            cover.y += noteStyle.getHoldCoverOffsets()[1] * cover.scale.y;
+            cover.y += -96; // hardcoded adjustment, because we are evil.
+        }
     }
-    */
     
     override function playNoteSplash(direction):Void
     {
@@ -136,36 +161,6 @@ class MultikeyStrumline extends Strumline {
                 MultikeyStrumline.fixSustainAnim(holdNote, noteStyle);
             }
         }
-
-        /*
-        for (cover in noteHoldCovers)
-        {
-            if (!cover.visible || !cover.alive) continue;
-
-            //var dir = cover.holdNote.noteDirection;
-            var index = noteHoldCovers.members.indexOf[cover];
-            var targetColor = noteStyle.scriptCall("getMultikeyNoteColor", [holdNoteDirections[index]]);
-            
-            if (cover.holdNote.alive)
-            {
-                if (cover.glow.animation.name == null) {
-                    cover.glow.animation.play("holdCoverStart" + targetColor);
-                }
-                if (StringTools.startsWith(cover.glow.animation.name, "holdCoverStart") && cover.glow.animation.name != "holdCoverStart" + targetColor) {
-                    cover.glow.animation.play("holdCoverStart" + targetColor);
-                }
-                else if (StringTools.startsWith(cover.glow.animation.name, "holdCoverEnd") && cover.glow.animation.name != "holdCoverEnd" + targetColor) {
-                    cover.glow.animation.play("holdCoverEnd" + targetColor);
-                }
-                else if (StringTools.startsWith(cover.glow.animation.name, "holdCover") && cover.glow.animation.name != "holdCover" + targetColor) {
-                    cover.glow.animation.play("holdCover" + targetColor);
-                }
-            } else {
-                if (cover.glow.animation.name != "holdCoverEnd" + targetColor)
-                    cover.glow.animation.play("holdCoverEnd" + targetColor, true);
-            }
-        }
-        */
     }
 
     public static function fixSustainAnim(sustain, noteStyle, inCharter = false) {
@@ -311,6 +306,9 @@ class Multikey extends Module
 {
     public function new() {
         super("Multikey");
+        #if mobile
+        throw "Sorry but the multikey script currently doesn't work on mobile, I've tried but it just doesn't work";
+        #end
     }
 
     public function setKeyCount(keyCount:Int) {
@@ -435,6 +433,8 @@ class Multikey extends Module
         if (retry) {
             state.initStrumlines();
         }
+
+        fixMobileArrows(state);
     }
 
     var fixedNotes = false;
@@ -572,5 +572,34 @@ class Multikey extends Module
             MultikeyStrumline.fixSustainAnim(holdNote, NoteStyleRegistry.instance.fetchEntry(holdNote.noteStyle), true);
         }
         */
+    }
+
+    function fixMobileArrows(state) {
+        #if mobile
+        final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+        final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
+
+        state.playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
+        state.playerStrumline.setNoteSpacing(playerNoteSpacing * state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
+        for (strum in state.playerStrumline)
+        {
+            strum.width *= 2;
+        }
+        state.opponentStrumline.enterMiniMode(0.4 * amplification);
+
+        state.playerStrumline.x = (FlxG.width - state.playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
+        state.playerStrumline.y = (FlxG.height - state.playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
+        if (state.currentChart?.noteStyle != "pixel")
+        {
+            #if android state.playerStrumline.y += 10; #end
+        }
+        else
+        {
+            state.playerStrumline.y -= 10;
+        }
+        state.opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
+        state.opponentStrumline.x -= 30;
+        #end
     }
 }
