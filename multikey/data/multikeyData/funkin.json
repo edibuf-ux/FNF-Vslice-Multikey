@@ -14,6 +14,8 @@
             "noteSpacing": 1.0,
             "noteXOffset": 0,
             "strumlineOffsets": [0, 0],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -23,6 +25,8 @@
             "noteSpacing": 1.0,
             "noteXOffset": 0,
             "strumlineOffsets": [0, 0],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -32,6 +36,8 @@
             "noteSpacing": 1.0,
             "noteXOffset": 0,
             "strumlineOffsets": [0, 0],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -41,6 +47,8 @@
             "noteSpacing": 1.0,
             "noteXOffset": 0,
             "strumlineOffsets": [25, 25],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -50,6 +58,8 @@
             "noteSpacing": 1.0,
             "noteXOffset": 0,
             "strumlineOffsets": [0, 0],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -59,6 +69,8 @@
             "noteSpacing": 0.75,
             "noteXOffset": -10,
             "strumlineOffsets": [30, 34],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -68,6 +80,8 @@
             "noteSpacing": 0.7,
             "noteXOffset": -20,
             "strumlineOffsets": [35, 38],
+            "holdNoteOffsets": [0, 0],
+            "holdCoverOffsets": [0, 0],
             "splashOffsets": [0, 0]
         },
         {
@@ -77,16 +91,20 @@
             "noteSpacing": 0.65,
             "noteXOffset": -30,
             "strumlineOffsets": [35, 38],
-            "splashOffsets": [0, 0]
+            "holdNoteOffsets": [3, 0],
+            "holdCoverOffsets": [-3, 50],
+            "splashOffsets": [-20, -20]
         },
         {
             "noteDirectionIndexes": [0, 1, 2, 3, 4, 5, 6, 7, 8],
             "singDirectionIndexes": [0, 1, 2, 3, 2, 0, 1, 2, 3],
-            "noteScale": 1.0,
-            "noteSpacing": 1.0,
-            "noteXOffset": -50,
-            "strumlineOffsets": [0, 0],
-            "splashOffsets": [0, 0]
+            "noteScale": 0.65,
+            "noteSpacing": 0.56,
+            "noteXOffset": -30,
+            "strumlineOffsets": [45, 45],
+            "holdNoteOffsets": [1, 0],
+            "holdCoverOffsets": [5, 78],
+            "splashOffsets": [-20, -20]
         }
     ],
     "splashData": [

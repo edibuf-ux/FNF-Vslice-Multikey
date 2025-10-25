@@ -2,6 +2,7 @@ import funkin.input.PreciseInputManager;
 import funkin.modding.module.Module;
 //import flixel.util.FlxTypedSignal;
 import funkin.play.PlayState;
+import funkin.Conductor;
 import funkin.play.notes.Strumline;
 import funkin.util.Constants;
 import flixel.FlxG;
@@ -362,6 +363,15 @@ class MultikeyInputHandler extends Module
 			initControls();
         }
 	}
+	override public function onSubStateOpenEnd(event)
+    {
+        super.onSubStateOpenEnd(event);
+        if (PlayState.instance == event.targetState) {
+            FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
+        	FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
+			initControls();
+        }
+    }
 	function onSongRetry(e) {
 		initControls();
 	}
@@ -377,6 +387,7 @@ class MultikeyInputHandler extends Module
       		PlayState.instance.inputReleaseQueue = [];
 
 			processInputQueue();
+			handleBFAnimHold();
 		}
 	}
 
@@ -467,5 +478,16 @@ class MultikeyInputHandler extends Module
 		}
 
 		PlayState.instance.playerStrumline.noteVibrations.tryNoteVibration();
+  }
+
+  function handleBFAnimHold() {
+	if (!PlayState.instance.isMinimalMode && _keysHeld.contains(true)) {
+		var bf = PlayState.instance.currentStage.getBoyfriend();
+		if (bf != null) {
+			//should be good enough to just keep it
+			var targetTime = (bf.singTimeSteps * (Conductor.instance.stepLengthMs / Constants.MS_PER_SEC)) - 0.05;
+			if (bf.holdTimer > targetTime) bf.holdTimer = targetTime;
+		}
+	}
   }
 }
