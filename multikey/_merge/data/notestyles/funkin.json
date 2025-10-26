@@ -1,0 +1,6 @@
+[
+    { "op": "replace", "path": "/assets/note/assetPath", "value": "shared:notes-multikey" },
+    { "op": "replace", "path": "/assets/noteStrumline/assetPath", "value": "shared:noteStrumline-multikey" },
+    { "op": "replace", "path": "/assets/holdNote/assetPath", "value": "NOTE_hold_assets-multikey" },
+    { "op": "replace", "path": "/assets/noteSplash/assetPath", "value": "shared:noteSplashes-multikey" }
+]

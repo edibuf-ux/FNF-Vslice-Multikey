@@ -25,6 +25,9 @@ import funkin.util.tools.StringTools as FunkinStringTools;
 import funkin.util.ReflectUtil;
 import haxe.Timer;
 import haxe.Json;
+import funkin.Preferences;
+import funkin.util.PlatformUtil;
+import funkin.util.HostPlatform;
 
 class MultikeyStrumline extends Strumline {
 
@@ -44,9 +47,7 @@ class MultikeyStrumline extends Strumline {
 
     override function getXPos(direction):Float {
         var pos = 0;
-        #if mobile
-        if (inArrowContorlSchemeMode && isPlayer) pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
-        #end
+        if (Multikey.onMobile && inArrowContorlSchemeMode && isPlayer) pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
         var halfKeyCount = Strumline.KEY_COUNT / 2;
         if (direction < halfKeyCount) {
             return (-pos * halfKeyCount) + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale.x) + noteXOffset;
@@ -305,11 +306,15 @@ class MultikeyStrumline extends Strumline {
 
 class Multikey extends Module
 {
+    public static var platform:HostPlatform;
+    public static var onMobile:Bool = false;
     public function new() {
         super("Multikey");
-        #if mobile
-        throw "Sorry but the multikey script currently doesn't work on mobile, I've tried but it just doesn't work";
-        #end
+
+        platform = PlatformUtil.detectHostPlatform();
+        onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
+
+        if (onMobile) Preferences.downscroll = true;
     }
 
     public function setKeyCount(keyCount:Int) {
@@ -425,9 +430,11 @@ class Multikey extends Module
                 keyCount = ReflectUtil.getProperty(data.keyCounts, diff);
             }
         }
-
         return keyCount;
     }
+
+    public static var originalControlsScheme = "Arrows";
+
     public function setupMultikeyStrumlines(state, retry = false) {
 
         state.playerStrumline.destroy();
@@ -441,9 +448,13 @@ class Multikey extends Module
 
         if (retry) {
             state.initStrumlines();
+            fixMobileArrows(state);
+        } else {
+            if (onMobile) {
+                originalControlsScheme = Preferences.controlsScheme;
+                Preferences.controlsScheme = "Four Lanes"; //stops a crash, will redo later
+            }            
         }
-
-        fixMobileArrows(state);
     }
 
     var fixedNotes = false;
@@ -499,6 +510,7 @@ class Multikey extends Module
         } else {
             PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.OTHER;
             PlayState.instance.currentStage.getDad()?.characterType = CharacterType.OTHER;
+            fixMobileArrows(PlayState.instance);
         }
     }
 
@@ -572,7 +584,8 @@ class Multikey extends Module
 
     //WIP!
     function fixMobileArrows(state) {
-        #if mobile
+        if (!onMobile) return;
+
         final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
         final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
         final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
@@ -589,7 +602,7 @@ class Multikey extends Module
         state.playerStrumline.y = (FlxG.height - state.playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
         if (state.currentChart?.noteStyle != "pixel")
         {
-            #if android state.playerStrumline.y += 10; #end
+            if (platform == HostPlatform.ANDROID) state.playerStrumline.y += 10;
         }
         else
         {
@@ -597,7 +610,6 @@ class Multikey extends Module
         }
         state.opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
         state.opponentStrumline.x -= 30;
-        #end
     }
 
     ///////////////////////////

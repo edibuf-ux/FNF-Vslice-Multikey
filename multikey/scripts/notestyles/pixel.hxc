@@ -32,6 +32,7 @@ class PixelNoteStyle extends NoteStyle
         if (multikeyData.holdCoverData == null || multikeyData.holdCoverData.length == 0) throwMultikeyError("No hold cover data found");
         if (multikeyData.strumNames == null || multikeyData.strumNames.length == 0) throwMultikeyError("No strum name data found");
         if (multikeyData.noteColors == null || multikeyData.noteColors.length == 0) throwMultikeyError("No note color data found");
+        if (multikeyData.noteColorsRGB == null || multikeyData.noteColorsRGB.length == 0) throwMultikeyError("No note rgb color data found");
         if (multikeyData.noteDirections == null || multikeyData.noteDirections.length == 0) throwMultikeyError("No note direction data found");
         
         if (multikeyData.notePrefix == null) multikeyData.notePrefix = "note";
@@ -46,6 +47,7 @@ class PixelNoteStyle extends NoteStyle
             for (index in data.noteDirectionIndexes) {
                 if (index > multikeyData.strumNames.length-1) throwMultikeyError("Note direction index too high for strum names!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.strumNames.length + ")");
                 if (index > multikeyData.noteColors.length-1) throwMultikeyError("Note direction index too high for note colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColors.length + ")");
+                if (index > multikeyData.noteColorsRGB.length-1) throwMultikeyError("Note direction index too high for note rgb colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColorsRGB.length + ")");
                 if (index > multikeyData.noteDirections.length-1) throwMultikeyError("Note direction index too high for note directions!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteDirections.length + ")");
             }
 
@@ -81,6 +83,7 @@ class PixelNoteStyle extends NoteStyle
         }
 
         var maxNoteColors = multikeyData.noteColors.length;
+        if (maxNoteColors != multikeyData.noteColorsRGB.length) throwMultikeyError("Mismatching note rgb color array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note rgb colors length: " + multikeyData.noteColorsRGB.length + ")");
         if (maxNoteColors != multikeyData.strumNames.length) throwMultikeyError("Mismatching strum names array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Strum names length: " + multikeyData.strumNames.length + ")");
         if (maxNoteColors != multikeyData.noteDirections.length) throwMultikeyError("Mismatching note directions array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note directions length: " + multikeyData.noteDirections.length + ")");
         if (maxNoteColors != multikeyData.splashData.length) throwMultikeyError("Mismatching splash data array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Splash data length: " + multikeyData.splashData.length + ")");
@@ -116,6 +119,9 @@ class PixelNoteStyle extends NoteStyle
     }
     public inline function getMultikeyNoteColor(dir) {
         return multikeyData.noteColors[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+    }
+    public inline function getMultikeyNoteColorRGB(dir) {
+        return multikeyData.noteColorsRGB[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
     public inline function getMultikeyNoteDirectionIndex(dir) {
         return multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT];

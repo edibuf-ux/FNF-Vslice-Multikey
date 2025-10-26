@@ -1,24 +1,36 @@
 import funkin.input.PreciseInputManager;
 import funkin.modding.module.Module;
 import funkin.play.PlayState;
+import funkin.graphics.FunkinSprite;
 import funkin.Conductor;
 import funkin.play.notes.Strumline;
 import funkin.util.Constants;
 import flixel.FlxG;
 import funkin.util.ReflectUtil;
 import funkin.util.FlxGamepadUtil;
-//import flixel.util.FlxSave;
+import funkin.mobile.ui.FunkinHint;
+import funkin.mobile.ui.FunkinHintAlphaStyle;
+import funkin.mobile.input.ControlsHandler;
+import funkin.PlayerSettings;
+import funkin.util.PlatformUtil;
+import funkin.util.HostPlatform;
 import haxe.Json;
 
+import Multikey;
 import CustomFlxKey; // as FlxKey;
 import CustomFlxGamepadInputID;
 
 class MultikeyInputHandler extends Module
 {
+	public static var platform:HostPlatform;
+    public static var onMobile:Bool = false;
 	var loadedControls = null;
     public function new() {
         super("MultikeyInputHandler");
 		loadedControls = loadCustomControls();
+
+		platform = PlatformUtil.detectHostPlatform();
+        onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
     }
 
 	function loadDefaultControls() {
@@ -106,8 +118,21 @@ class MultikeyInputHandler extends Module
 		for (buttons in loadedControls.gamepad[Strumline.KEY_COUNT-1]) {
 			_buttonList[0].push(CustomFlxGamepadInputID.fromString(buttons[0]));
 			_buttonList[1].push(CustomFlxGamepadInputID.fromString(buttons[1]));
-		}	
+		}
 	}
+
+	function createHintLane(x:Float, y:Float, noteDirection:Int, width:Int, height:Int, color:FlxColor = 0xFFFFFFFF, label:Bool = true,
+      gradient:Bool = true) {
+		var hitbox = PlayState.instance.hitbox;
+		var noteDir = noteDirection;
+		final hint:FunkinHint = new FunkinHint(x, y, noteDirection, label ? hitbox.createHintLaneLabelGraphic(width, height, Math.floor(height * 0.035), color) : null);
+		hint.loadGraphic(hitbox.createHintLaneGraphic(width, height, color, gradient));
+		hint.onDown.add(function() {inputDown(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onUp.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onOut.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.initTween(FunkinHintAlphaStyle.INVISIBLE_TILL_PRESS);
+		return hint;
+	  }
 
 	inline function throwMultikeyError(error) {
         throw "Multikey Input Handler Error: " + error;
@@ -128,14 +153,9 @@ class MultikeyInputHandler extends Module
 		return -1;
 	}
 
-	//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/input/PreciseInputManager.hx#L289
-    function handleKeyDown(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
-    {
-        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
-		var index = getIndexFromKey(key);
-        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
-
-        timestamp *= Constants.NS_PER_MS;
+	function inputDown(index:Int, timestamp:Int64) {
+		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+		timestamp *= Constants.NS_PER_MS;
 
 		if (!_keysHeld[index]) {
 			if (PlayState.instance.isGamePaused) return;
@@ -145,13 +165,9 @@ class MultikeyInputHandler extends Module
 			});
 		}
 		_keysHeld[index] = true;
-    }
-
-    function handleKeyUp(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
-    {
-        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
-		var index = getIndexFromKey(key);
-        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+	}
+	function inputUp(index:Int, timestamp:Int64) {
+		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
 
         timestamp *= Constants.NS_PER_MS;
 
@@ -163,6 +179,21 @@ class MultikeyInputHandler extends Module
 			});
 		}
 		_keysHeld[index] = false;
+	}
+
+	//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/input/PreciseInputManager.hx#L289
+    function handleKeyDown(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = getIndexFromKey(key);
+        inputDown(index, timestamp);
+    }
+
+    function handleKeyUp(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = getIndexFromKey(key);
+		inputUp(index, timestamp);
     }
 
     
@@ -170,63 +201,46 @@ class MultikeyInputHandler extends Module
     {
         var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
         var index = getIndexFromButton(buttonId);
-        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
-
-        timestamp *= Constants.NS_PER_MS;
-
-		if (!_keysHeld[index]) {
-			if (PlayState.instance.isGamePaused) return;
-			inputPressQueue.push({
-				noteDirection: index,
-				timestamp: timestamp
-			});
-		}
-		_keysHeld[index] = true;
+        inputDown(index, timestamp);
     }
 
     function handleButtonUp(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
     {
         var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
 		var index = getIndexFromButton(buttonId);
-        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
-
-        timestamp *= Constants.NS_PER_MS;
-
-		if (_keysHeld[index]) {
-			if (PlayState.instance.isGamePaused) return;
-			inputReleaseQueue.push({
-				noteDirection: index,
-				timestamp: timestamp
-			});
-		}
-		_keysHeld[index] = false;
+        inputUp(index, timestamp);
     }
     
 
 	var _deviceBinds = [];
 	function setupControlCallbacks() {
-		removeControlCallbacks(); //just in case
-		FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
-        FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
+		if (!onMobile) {
+			removeControlCallbacks(); //just in case
+			FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
+			FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
 
-		
-		for (gamepad in FlxG.gamepads._gamepads) {
-			if (gamepad == null) continue;
-			var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
+			
+			for (gamepad in FlxG.gamepads._gamepads) {
+				if (gamepad == null) continue;
+				var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
 
-			var callbacks = {
-				gamepad: gamepad,
-				onButtonDown: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonDown(gamepad, button, timestamp); },
-        		onButtonUp: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonUp(gamepad, button, timestamp); }
-			};
+				var callbacks = {
+					gamepad: gamepad,
+					onButtonDown: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonDown(gamepad, button, timestamp); },
+					onButtonUp: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonUp(gamepad, button, timestamp); }
+				};
 
-			limeGamepad.onButtonDownPrecise.add(callbacks.onButtonDown);
-    		limeGamepad.onButtonUpPrecise.add(callbacks.onButtonUp);
+				limeGamepad.onButtonDownPrecise.add(callbacks.onButtonDown);
+				limeGamepad.onButtonUpPrecise.add(callbacks.onButtonUp);
 
-			_deviceBinds.push(callbacks);
+				_deviceBinds.push(callbacks);
+			}
 		}
+
+		createMobileHitboxes(PlayState.instance);
 	}
 	function removeControlCallbacks() {
+		if (onMobile) return;
 		FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
         FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
 
@@ -239,6 +253,67 @@ class MultikeyInputHandler extends Module
     		limeGamepad.onButtonUpPrecise.remove(callbacks.onButtonUp);
 		}
 		_deviceBinds = [];
+	}
+
+	function createMobileHitboxes(state) {
+		if (!onMobile) return;
+
+        for (hint in state.hitbox.members) {
+            hint.destroy();
+        }
+        state.hitbox.clear();
+		if (state.hitbox.trackedInputs != null && state.hitbox.trackedInputs.length > 0) {
+			ControlsHandler.removeCachedInput(PlayerSettings.player1.controls, state.hitbox.trackedInputs);
+		}
+		state.hitbox.trackedInputs = [];
+
+        /*if (originalControlsScheme == "Four Lanes" || originalControlsScheme == "Arrows")*/ {
+
+            final hintWidth:Int = Math.floor(FlxG.width / Strumline.DIRECTIONS.length);
+            final hintHeight:Int = FlxG.height;
+			var noteStyle = state.playerStrumline.noteStyle;
+
+            for (i in 0...Strumline.DIRECTIONS.length)
+            {
+				var color = Std.parseInt(noteStyle.scriptCall("getMultikeyNoteColorRGB", [i]));
+                state.hitbox.add(createHintLane(i * hintWidth, 0, i, hintWidth, hintHeight,
+                    color, true, true));
+            }
+        }
+
+		initPauseSprites(state);
+    }
+
+	function initPauseSprites(state)
+	{
+		state.remove(state.pauseCircle);
+		state.remove(state.pauseButton);
+		state.pauseButton = FunkinSprite.createSparrow(0, 0, "pauseButton");
+    	state.pauseCircle = FunkinSprite.create(0, 0, 'pauseCircle');
+
+		state.pauseButton.animation.addByIndices('idle', 'back', [0], "", 24, false);
+		state.pauseButton.animation.addByIndices('hold', 'back', [5], "", 24, false);
+		state.pauseButton.animation.addByIndices('confirm', 'back', [
+		6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+		], "", 24, false);
+		state.pauseButton.scale.set(0.8, 0.8);
+		state.pauseButton.updateHitbox();
+		state.pauseButton.animation.play("idle");
+		state.pauseButton.setPosition((FlxG.width - state.pauseButton.width) - 35, 35);
+		state.pauseButton.cameras = [state.camControls];
+
+		state.pauseCircle.scale.set(0.84, 0.8);
+		state.pauseCircle.updateHitbox();
+		state.pauseCircle.cameras = [state.camControls];
+		state.pauseCircle.x = ((state.pauseButton.x + (state.pauseButton.width / 2)) - (state.pauseCircle.width / 2));
+		state.pauseCircle.y = ((state.pauseButton.y + (state.pauseButton.height / 2)) - (state.pauseCircle.height / 2));
+		state.pauseCircle.alpha = 0.1;
+
+		state.add(state.pauseCircle);
+		state.add(state.pauseButton);
+		state.hitbox?.forEachAlive(function(hint:FunkinHint) {
+			hint.deadZones.push(state.pauseButton);
+		});
 	}
 
 	var inPlayState:Bool = false;
@@ -316,11 +391,14 @@ class MultikeyInputHandler extends Module
 
 			var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
 
-			#if FEATURE_GHOST_TAPPING
-			if ((!PlayState.instance.playerStrumline.mayGhostTap()) && notesInDirection.length == 0)
-			#else
-			if (notesInDirection.length == 0)
-			#end
+			var ghostMiss = false;
+			if (onMobile) {
+				ghostMiss = (!PlayState.instance.playerStrumline.mayGhostTap()) && notesInDirection.length == 0;
+			} else {
+				ghostMiss = notesInDirection.length == 0;
+			}
+
+			if (ghostMiss)
 			{
 				// Pressed a wrong key with no notes nearby.
 				// Perform a ghost miss (anti-spam).
