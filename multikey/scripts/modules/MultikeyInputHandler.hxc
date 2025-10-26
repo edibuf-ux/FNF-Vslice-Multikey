@@ -1,0 +1,384 @@
+import funkin.input.PreciseInputManager;
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import funkin.Conductor;
+import funkin.play.notes.Strumline;
+import funkin.util.Constants;
+import flixel.FlxG;
+import funkin.util.ReflectUtil;
+import funkin.util.FlxGamepadUtil;
+//import flixel.util.FlxSave;
+import haxe.Json;
+
+import CustomFlxKey; // as FlxKey;
+import CustomFlxGamepadInputID;
+
+class MultikeyInputHandler extends Module
+{
+	var loadedControls = null;
+    public function new() {
+        super("MultikeyInputHandler");
+		loadedControls = loadCustomControls();
+    }
+
+	function loadDefaultControls() {
+		var controls = null;
+		var path = Paths.file("data/defaultMultikeyControls.json");
+        if (Assets.exists(path)) {
+            controls = Json.parse(Assets.getText(path));
+        } else {
+            throwMultikeyError("Missing default multikey controls json!");
+        }
+
+		//validation
+		if (controls.keyboard == null || controls.keyboard.length == 0) throwMultikeyError("No default keyboard binds found!");
+		if (controls.gamepad == null || controls.gamepad.length == 0) throwMultikeyError("No default gamepad binds found!");
+		if (controls.keyboard.length != controls.gamepad.length) throwMultikeyError("Mismatching array length between keyboard and gamepad default controls! (Keyboard length: " + controls.keyboard.length + ", Gamepad length: " + controls.gamepad.length + ")");
+		
+		for (i in 0...controls.keyboard.length) {
+			var keyCount = i + 1;
+
+			if (controls.keyboard[i].length != keyCount) throwMultikeyError("Mismatching array length between keyboard controls and keycount! (Keycount: " + keyCount + ", Controls array length: " + controls.keyboard[i].length + ")");
+			if (controls.gamepad[i].length != keyCount) throwMultikeyError("Mismatching array length between gamepad controls and keycount! (Keycount: " + keyCount + ", Controls array length: " + controls.gamepad[i].length + ")");
+
+			for (keys in controls.keyboard[i]) {
+				if (keys.length != 2) throwMultikeyError("Bad array length for keyboard bind, should be 2! (Keycount: " + keyCount + ", Key Index: " + i + ", Key list length: " + keys.length + ")");
+			}
+			for (buttons in controls.gamepad[i]) {
+				if (buttons.length != 2) throwMultikeyError("Bad array length for gamepad bind, should be 2! (Keycount: " + keyCount + ", Button Index: " + i + ", Button list length: " + buttons.length + ")");
+			}
+		}
+
+		return controls;
+	}
+
+	function loadCustomControls() {
+		var controls = null;
+		var defaultControls = loadDefaultControls();
+
+		var save = FlxG.save;
+        //save.bind("MultikeyCustomBinds", "FunkinCrew");
+		controls = save.data.binds;
+		if (controls == null) {
+			trace("No multikey binds found, using default");
+			controls = defaultControls;
+			save.data.binds = controls;
+			save.flush();
+		}
+
+		if (controls.keyboard.length < defaultControls.keyboard.length) {
+			trace("Mismatching multikey keyboard binds, trying to fix");
+			for (i in controls.keyboard.length...defaultControls.keyboard.length) {
+				controls.keyboard[i] = defaultControls.keyboard[i].copy();
+			}
+			save.data.binds = controls;
+			save.flush();
+		}
+		if (controls.gamepad.length < defaultControls.gamepad.length) {
+			trace("Mismatching multikey gamepad binds, trying to fix");
+			for (i in controls.gamepad.length...defaultControls.gamepad.length) {
+				controls.gamepad[i] = defaultControls.gamepad[i].copy();
+			}
+			save.data.binds = controls;
+			save.flush();
+		}
+		//save.close();
+
+		return controls;
+	}
+
+	var _keyList:Array<Array<Int>> = [];
+	var _buttonList:Array<Array<Int>> = [];
+	var _keysHeld:Array<Bool> = [];
+
+	function initControls() {
+		
+		if (Strumline.KEY_COUNT > loadedControls.keyboard.length) throwMultikeyError("No controls found for key count: " + Strumline.KEY_COUNT + "!");
+
+		_keysHeld = [];
+		_keyList = [[], []];
+		_buttonList = [[], []];
+		for (i in 0...Strumline.KEY_COUNT) _keysHeld.push(false);
+		for (keys in loadedControls.keyboard[Strumline.KEY_COUNT-1]) {
+			_keyList[0].push(CustomFlxKey.fromString(keys[0]));
+			_keyList[1].push(CustomFlxKey.fromString(keys[1]));
+		}
+		for (buttons in loadedControls.gamepad[Strumline.KEY_COUNT-1]) {
+			_buttonList[0].push(CustomFlxGamepadInputID.fromString(buttons[0]));
+			_buttonList[1].push(CustomFlxGamepadInputID.fromString(buttons[1]));
+		}	
+	}
+
+	inline function throwMultikeyError(error) {
+        throw "Multikey Input Handler Error: " + error;
+    }
+
+	inline function getIndexFromKey(key) {
+		for (list in _keyList) {
+			var index = list.indexOf(key);
+			if (index != -1) return index;
+		}
+		return -1;
+	}
+	inline function getIndexFromButton(button) {
+		for (list in _buttonList) {
+			var index = list.indexOf(button);
+			if (index != -1) return index;
+		}
+		return -1;
+	}
+
+	//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/input/PreciseInputManager.hx#L289
+    function handleKeyDown(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = getIndexFromKey(key);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        timestamp *= Constants.NS_PER_MS;
+
+		if (!_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputPressQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = true;
+    }
+
+    function handleKeyUp(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+    {
+        var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
+		var index = getIndexFromKey(key);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        timestamp *= Constants.NS_PER_MS;
+
+		if (_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputReleaseQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = false;
+    }
+
+    
+    function handleButtonDown(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+    {
+        var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
+        var index = getIndexFromButton(buttonId);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        timestamp *= Constants.NS_PER_MS;
+
+		if (!_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputPressQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = true;
+    }
+
+    function handleButtonUp(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+    {
+        var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
+		var index = getIndexFromButton(buttonId);
+        if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
+
+        timestamp *= Constants.NS_PER_MS;
+
+		if (_keysHeld[index]) {
+			if (PlayState.instance.isGamePaused) return;
+			inputReleaseQueue.push({
+				noteDirection: index,
+				timestamp: timestamp
+			});
+		}
+		_keysHeld[index] = false;
+    }
+    
+
+	var _deviceBinds = [];
+	function setupControlCallbacks() {
+		removeControlCallbacks(); //just in case
+		FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
+        FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
+
+		
+		for (gamepad in FlxG.gamepads._gamepads) {
+			if (gamepad == null) continue;
+			var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
+
+			var callbacks = {
+				gamepad: gamepad,
+				onButtonDown: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonDown(gamepad, button, timestamp); },
+        		onButtonUp: function(button:LimeGamepadButton, timestamp:Int64) { handleButtonUp(gamepad, button, timestamp); }
+			};
+
+			limeGamepad.onButtonDownPrecise.add(callbacks.onButtonDown);
+    		limeGamepad.onButtonUpPrecise.add(callbacks.onButtonUp);
+
+			_deviceBinds.push(callbacks);
+		}
+	}
+	function removeControlCallbacks() {
+		FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
+        FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
+
+		for (callbacks in _deviceBinds) {
+			var gamepad = callbacks.gamepad;
+			if (gamepad == null) continue;
+
+			var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
+			limeGamepad.onButtonDownPrecise.remove(callbacks.onButtonDown);
+    		limeGamepad.onButtonUpPrecise.remove(callbacks.onButtonUp);
+		}
+		_deviceBinds = [];
+	}
+
+	var inPlayState:Bool = false;
+    override function onStateChangeBegin(e) {
+		if (inPlayState) {
+			removeControlCallbacks();
+		}
+		inPlayState = false;
+	}
+    override function onStateChangeEnd(e) {
+		if (Std.isOfType(e.targetState, PlayState)) {
+            inPlayState = true;
+			setupControlCallbacks();
+			initControls();
+        }
+	}
+	override public function onSubStateOpenEnd(event)
+    {
+        super.onSubStateOpenEnd(event);
+        if (PlayState.instance == event.targetState) {
+            setupControlCallbacks();
+			initControls();
+        }
+    }
+	function onSongRetry(e) {
+		initControls();
+	}
+
+	//custom input queue
+	var inputPressQueue:Array<PreciseInputEvent> = [];
+	var inputReleaseQueue:Array<PreciseInputEvent> = [];
+
+	override function onUpdate(e) {
+		if (PlayState.instance != null && Strumline.KEY_COUNT != 4) {
+			//disable default input queue
+			PlayState.instance.inputPressQueue = [];
+      		PlayState.instance.inputReleaseQueue = [];
+
+			processInputQueue();
+			handleBFAnimHold();
+		}
+	}
+
+
+	function processInputQueue():Void
+	{
+		if (inputPressQueue.length + inputReleaseQueue.length == 0) return;
+
+		// Ignore inputs during cutscenes.
+		if (PlayState.instance.isInCutscene || PlayState.instance.disableKeys)
+		{
+			inputPressQueue = [];
+			inputReleaseQueue = [];
+			return;
+		}
+
+		// Generate a list of notes within range.
+		var notesInRange:Array<NoteSprite> = PlayState.instance.playerStrumline.getNotesMayHit();
+
+		var notesByDirection:Array<Array<NoteSprite>> = [];
+		for (i in 0...Strumline.KEY_COUNT) notesByDirection.push([]);
+
+		for (note in notesInRange)
+			notesByDirection[note.direction].push(note);
+
+		while (inputPressQueue.length > 0)
+		{
+			var input:Null<PreciseInputEvent> = inputPressQueue.shift();
+			if (input == null) continue;
+
+			PlayState.instance.playerStrumline.pressKey(input.noteDirection);
+
+			// Don't credit or penalize inputs in Bot Play.
+			if (PlayState.instance.isBotPlayMode) continue;
+
+			var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
+
+			#if FEATURE_GHOST_TAPPING
+			if ((!PlayState.instance.playerStrumline.mayGhostTap()) && notesInDirection.length == 0)
+			#else
+			if (notesInDirection.length == 0)
+			#end
+			{
+				// Pressed a wrong key with no notes nearby.
+				// Perform a ghost miss (anti-spam).
+				PlayState.instance.ghostNoteMiss(input.noteDirection, notesInRange.length > 0);
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playPress(input.noteDirection);
+				//trace('PENALTY Score: ${songScore}');
+			}
+			else if (notesInDirection.length == 0)
+			{
+				// Press a key with no penalty.
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playPress(input.noteDirection);
+				//trace('NO PENALTY Score: ${songScore}');
+			}
+			else
+			{
+				// Choose the first note, deprioritizing low priority notes.
+				var targetNote:Null<NoteSprite> = notesInDirection[0]; //notesInDirection.find((note) -> !note.lowPriority);
+				if (targetNote == null) targetNote = notesInDirection[0];
+				if (targetNote == null) continue;
+
+				// Judge and hit the note.
+				// trace('Hit note! ${targetNote.noteData}');
+				PlayState.instance.goodNoteHit(targetNote, input);
+				// trace('Score: ${songScore}');
+
+				notesInDirection.remove(targetNote);
+
+				// Play the strumline animation.
+				PlayState.instance.playerStrumline.playConfirm(input.noteDirection);
+			}
+		}
+
+		while (inputReleaseQueue.length > 0)
+		{
+			var input:Null<PreciseInputEvent> = inputReleaseQueue.shift();
+			if (input == null) continue;
+
+			// Play the strumline animation.
+			PlayState.instance.playerStrumline.playStatic(input.noteDirection);
+
+			PlayState.instance.playerStrumline.releaseKey(input.noteDirection);
+		}
+
+		PlayState.instance.playerStrumline.noteVibrations.tryNoteVibration();
+  }
+
+  function handleBFAnimHold() {
+	if (!PlayState.instance.isMinimalMode && _keysHeld.contains(true)) {
+		var bf = PlayState.instance.currentStage.getBoyfriend();
+		if (bf != null) {
+			//should be good enough to just keep it held before its supposed to end
+			var targetTime = (bf.singTimeSteps * (Conductor.instance.stepLengthMs / Constants.MS_PER_SEC)) - 0.05;
+			if (bf.holdTimer > targetTime) bf.holdTimer = targetTime;
+		}
+	}
+  }
+}

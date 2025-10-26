@@ -54,12 +54,12 @@
         {
             "noteDirectionIndexes": [0, 1, 4, 2, 3],
             "singDirectionIndexes": [0, 1, 2, 2, 3],
-            "noteScale": 1.0,
-            "noteSpacing": 1.0,
+            "noteScale": 0.95,
+            "noteSpacing": 0.9,
             "noteXOffset": 0,
-            "strumlineOffsets": [0, 0],
-            "holdNoteOffsets": [0, 0],
-            "holdCoverOffsets": [0, 0],
+            "strumlineOffsets": [25, 30],
+            "holdNoteOffsets": [2, 0],
+            "holdCoverOffsets": [0, 5],
             "splashOffsets": [0, 0]
         },
         {

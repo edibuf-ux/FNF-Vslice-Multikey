@@ -1,0 +1,114 @@
+// :(
+class CustomFlxGamepadInputID {
+	static var ANY = -2;
+	static var NONE = -1;
+	static var A = 0;
+	static var B = 1;
+	static var X = 2;
+	static var Y = 3;
+	static var LEFT_SHOULDER = 4;
+	static var RIGHT_SHOULDER = 5;
+	static var BACK = 6;
+	static var START = 7;
+	static var LEFT_STICK_CLICK = 8;
+	static var RIGHT_STICK_CLICK = 9;
+	static var GUIDE = 10;
+	static var DPAD_UP = 11;
+	static var DPAD_DOWN = 12;
+	static var DPAD_LEFT = 13;
+	static var DPAD_RIGHT = 14;
+	static var LEFT_TRIGGER_BUTTON = 15;
+	static var RIGHT_TRIGGER_BUTTON = 16;
+	static var LEFT_TRIGGER = 17;
+	static var RIGHT_TRIGGER = 18;
+	static var LEFT_ANALOG_STICK = 19;
+	static var RIGHT_ANALOG_STICK = 20;
+	static var DPAD = 21;
+	#if FLX_JOYSTICK_API
+	static var LEFT_TRIGGER_FAKE = 22;
+	static var RIGHT_TRIGGER_FAKE = 23;
+	static var LEFT_STICK_FAKE = 24;
+	static var RIGHT_STICK_FAKE = 25;
+	#end
+	static var TILT_PITCH = 26;
+	static var TILT_ROLL = 27;
+	static var POINTER_X = 28;
+	static var POINTER_Y = 29;
+	static var EXTRA_0 = 30;
+	static var EXTRA_1 = 31;
+	static var EXTRA_2 = 32;
+	static var EXTRA_3 = 33;
+	static var LEFT_STICK_DIGITAL_UP = 34;
+	static var LEFT_STICK_DIGITAL_RIGHT = 35;
+	static var LEFT_STICK_DIGITAL_DOWN = 36;
+	static var LEFT_STICK_DIGITAL_LEFT = 37;
+	static var RIGHT_STICK_DIGITAL_UP = 38;
+	static var RIGHT_STICK_DIGITAL_RIGHT = 39;
+	static var RIGHT_STICK_DIGITAL_DOWN = 40;
+	static var RIGHT_STICK_DIGITAL_LEFT = 41;
+	static var ACCEPT = 42;
+	static var CANCEL = 43;
+
+    static var fromStringMap = [        
+        "ANY" => -2,
+        "NONE" => -1,
+        "A" => 0,
+        "B" => 1,
+        "X" => 2,
+        "Y" => 3,
+        "LEFT_SHOULDER" => 4,
+        "RIGHT_SHOULDER" => 5,
+        "BACK" => 6,
+        "START" => 7,
+        "LEFT_STICK_CLICK" => 8,
+        "RIGHT_STICK_CLICK" => 9,
+        "GUIDE" => 10,
+        "DPAD_UP" => 11,
+        "DPAD_DOWN" => 12,
+        "DPAD_LEFT" => 13,
+        "DPAD_RIGHT" => 14,
+        "LEFT_TRIGGER_BUTTON" => 15,
+        "RIGHT_TRIGGER_BUTTON" => 16,
+        "LEFT_TRIGGER" => 17,
+        "RIGHT_TRIGGER" => 18,
+        "LEFT_ANALOG_STICK" => 19,
+        "RIGHT_ANALOG_STICK" => 20,
+        "DPAD" => 21,
+        #if FLX_JOYSTICK_API
+        "LEFT_TRIGGER_FAKE" => 22,
+        "RIGHT_TRIGGER_FAKE" => 23,
+        "LEFT_STICK_FAKE" => 24,
+        "RIGHT_STICK_FAKE" => 25,
+        #end
+        "TILT_PITCH" => 26,
+        "TILT_ROLL" => 27,
+        "POINTER_X" => 28,
+        "POINTER_Y" => 29,
+        "EXTRA_0" => 30,
+        "EXTRA_1" => 31,
+        "EXTRA_2" => 32,
+        "EXTRA_3" => 33,
+        "LEFT_STICK_DIGITAL_UP" => 34,
+        "LEFT_STICK_DIGITAL_RIGHT" => 35,
+        "LEFT_STICK_DIGITAL_DOWN" => 36,
+        "LEFT_STICK_DIGITAL_LEFT" => 37,
+        "RIGHT_STICK_DIGITAL_UP" => 38,
+        "RIGHT_STICK_DIGITAL_RIGHT" => 39,
+        "RIGHT_STICK_DIGITAL_DOWN" => 40,
+        "RIGHT_STICK_DIGITAL_LEFT" => 41,
+        "ACCEPT" => 42,
+        "CANCEL" => 43,
+    ];
+
+    public static function fromString(s:String) {
+        s = s.toUpperCase();
+        return fromStringMap.exists(s) ? fromStringMap.get(s) : CustomFlxGamepadInputID.NONE;
+    }
+
+    public static function toString(key:Int) {
+        for (str => val in fromStringMap) {
+            if (val == key) return str;
+        }
+        return null;
+    }
+}

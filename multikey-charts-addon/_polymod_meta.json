@@ -1,10 +1,14 @@
 {
     "title":"Multikey Charts Addon",
-    "description":"Adds an extra multikey difficulty for a few songs",
+    "description":"Adds an extra multikey difficulty for certain songs",
     "contributors": [
       {
         "name": "TheZoroForce240",
-        "role": "recharts"
+        "role": "did most shitty recharts"
+      },
+      {
+        "name": "7salad3salad",
+        "role": "Week 5 recharts"
       }
     ],
     "optionalDependencies": {

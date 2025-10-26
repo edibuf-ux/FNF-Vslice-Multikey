@@ -93,6 +93,9 @@ class FunkinNoteStyle extends NoteStyle
 
     ///////////custom functions
 
+    public inline function getMultikeyData() {
+        return multikeyData;
+    }
     public inline function getKeyCountData() {
         return multikeyData.keyData[Strumline.KEY_COUNT-1];
     }

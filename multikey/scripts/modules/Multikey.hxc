@@ -5,7 +5,9 @@ import flixel.math.FlxMath;
 import funkin.Highscore;
 import funkin.play.character.CharacterType;
 import funkin.ui.debug.charting.ChartEditorState;
+import funkin.ui.debug.charting.components.ChartEditorNoteSprite;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
+import funkin.ui.debug.charting.components.ChartEditorNotePreview;
 import funkin.data.notestyle.NoteStyleRegistry;
 import funkin.modding.module.Module;
 import funkin.play.notes.Strumline;
@@ -19,20 +21,20 @@ import funkin.play.notes.NoteHoldCover;
 import funkin.play.song.Song;
 import funkin.Conductor;
 import StringTools;
+import funkin.util.tools.StringTools as FunkinStringTools;
 import funkin.util.ReflectUtil;
+import haxe.Timer;
 import haxe.Json;
 
 class MultikeyStrumline extends Strumline {
 
     public var noteXOffset:Float = 0;
     public var maxNoteColors:Int = 4;
-    public var maxNoteColorsDoubled:Int = 8;
 
     override public function new(noteStyle:NoteStyle, isPlayer:Bool, ?scrollSpeed:Float) {
         super(noteStyle, isPlayer, scrollSpeed);
         noteXOffset = noteStyle.scriptCall("getMultikeyNoteXOffset");
         maxNoteColors = noteStyle.scriptCall("getMaxNoteColors");
-        maxNoteColorsDoubled = maxNoteColors * 2;
 
         /*if (Strumline.KEY_COUNT > noteStyle.script("getMaxKeyCount")) {
             Strumline.KEY_COUNT = 4;
@@ -74,7 +76,7 @@ class MultikeyStrumline extends Strumline {
         holdNoteSprite.x += getXPos(holdNoteSprite.noteDirection);
 
         holdNoteSprite.x += holdNoteSprite.width / 2;
-        fixSustainAnim(holdNoteSprite, noteStyle);
+        MultikeyStrumline.fixSustainAnim(holdNoteSprite, noteStyle, maxNoteColors, false);
         holdNoteSprite.x -= holdNoteSprite.width / 2;
 
         return holdNoteSprite;
@@ -168,14 +170,25 @@ class MultikeyStrumline extends Strumline {
         {
             if (holdNote == null || !holdNote.alive) continue;
             if (conductorInUse.songPosition > holdNote.strumTime && holdNote.hitNote) {
-                fixSustainAnim(holdNote, noteStyle);
+                MultikeyStrumline.fixSustainAnim(holdNote, noteStyle, maxNoteColors, false);
             }
         }
     }
 
-    function fixSustainAnim(sustain, noteStyle, inCharter = false) {
+    public static function fixSustainAnim(sustain, noteStyle, maxNoteColors, inCharter) {
         if (sustain.graphic == null) return;
         sustain.customVertexData = true;
+
+        var maxNoteColorsDoubled = maxNoteColors * 2;
+
+        if (inCharter) {
+            sustain.zoom = 1.0;
+            sustain.zoom *= noteStyle.fetchHoldNoteScale();
+            sustain.zoom *= 0.7;
+            sustain.zoom *= ChartEditorState.GRID_SIZE / Strumline.STRUMLINE_SIZE;
+            sustain.zoom /= noteStyle.scriptCall("getMultikeyNoteScale");
+        }
+
 
         sustain.graphicWidth = sustain.graphic.width / maxNoteColorsDoubled * sustain.zoom;
         sustain.graphicHeight = SustainTrail.sustainHeight(sustain.sustainLength, sustain.parentStrumline?.scrollSpeed ?? 1.0);
@@ -341,6 +354,8 @@ class Multikey extends Module
             e.targetState.buttonSelectPlayer.width = ChartEditorState.GRID_SIZE * Strumline.KEY_COUNT;
             e.targetState.buttonSelectPlayer.x = e.targetState.buttonSelectOpponent.x + e.targetState.buttonSelectOpponent.width;
             e.targetState.buttonSelectEvent.x = e.targetState.buttonSelectPlayer.x + e.targetState.buttonSelectPlayer.width;
+
+
         }
 	}
 
@@ -351,6 +366,16 @@ class Multikey extends Module
             fixedNotes = false;
         } else if (Std.isOfType(state, ChartEditorState)) {
             setKeyCount(getKeyCount(state));
+
+            /*var entries:Array<String> = NoteStyleRegistry.instance.listEntryIds();
+
+            {
+                ChartEditorNoteSprite.buildEmptyFrameCollection();
+
+                for (entry in entries) {
+                    var noteStyle = NoteStyleRegistry.instance.fetchEntry(entry);
+                }
+            }*/
         }
     }
     override public function onSubStateOpenEnd(event)
@@ -432,11 +457,13 @@ class Multikey extends Module
                 fixedNotes = true;
                 fixChart();
             }
+        } else if (Std.isOfType(FlxG.state, ChartEditorState) && Strumline.KEY_COUNT != 4) {
+            charterUpdate();
         }
     }
 
     function fixChart() {
-        trace("fixing chart");
+        trace("Fixing chart for multikey");
         PlayState.instance.playerStrumline.clean();
         PlayState.instance.opponentStrumline.clean();
 
@@ -571,5 +598,78 @@ class Multikey extends Module
         state.opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
         state.opponentStrumline.x -= 30;
         #end
+    }
+
+    ///////////////////////////
+
+    var charterVisibleHoldNoteSpriteData = [];
+    function charterUpdate() {
+        for (noteSprite in FlxG.state.renderedNotes.members) {
+            if (noteSprite == null || noteSprite.noteData == null || !noteSprite.exists || !noteSprite.visible) continue;
+
+            if (StringTools.startsWith(noteSprite.animation.name, "tap")) {
+                
+                var noteStyle = NoteStyleRegistry.instance.fetchEntry(noteSprite.noteStyle);
+                var prefix = FunkinStringTools.toTitleCase(noteStyle.id);
+                var noteName = noteStyle.scriptCall("getMultikeyNoteDirectionName", [noteSprite.noteData.data]);
+                noteSprite.animation.addByPrefix(prefix + noteName + "Scroll", prefix + noteStyle.scriptCall("getMultikeyData").notePrefix + noteName);
+                noteSprite.animation.play(prefix + noteName + "Scroll");
+            }
+        }
+
+        //this might look ugly, but its better than updating the sustain every frame
+        for (data in charterVisibleHoldNoteSpriteData) {
+            data.seenThisFrame = false;
+        }
+        for (holdNoteSprite in FlxG.state.renderedHoldNotes.members)
+        {
+            if (holdNoteSprite == null || holdNoteSprite.noteData == null || !holdNoteSprite.exists || !holdNoteSprite.visible) continue;
+
+            var foundData = null;
+            for (data in charterVisibleHoldNoteSpriteData) {
+                if (data.holdNoteSprite == holdNoteSprite) {
+                    data.seenThisFrame = true;
+                    foundData = data;
+                    break;
+                }
+            }
+
+            var updateSustainStuff = false;
+
+            if (foundData != null) {
+                if (foundData.sustainLength != holdNoteSprite.sustainLength || foundData.noteDirection != holdNoteSprite.noteData.data) {
+                    updateSustainStuff = true;
+                }
+                holdNoteSprite.updateHitbox();
+            } else {
+                updateSustainStuff = true;
+                foundData = {
+                    holdNoteSprite: holdNoteSprite,
+                    sustainLength: holdNoteSprite.sustainLength,
+                    noteDirection: holdNoteSprite.noteData.data,
+                    seenThisFrame: true
+                };
+                charterVisibleHoldNoteSpriteData.push(foundData);
+            }
+
+            if (updateSustainStuff) {
+                var noteStyle = NoteStyleRegistry.instance.fetchEntry(holdNoteSprite.noteStyle);
+                var maxNoteColors = noteStyle.scriptCall("getMaxNoteColors");
+
+                if (holdNoteSprite.noteData != null) holdNoteSprite.noteDirection = holdNoteSprite.noteData.data % Strumline.KEY_COUNT;
+                MultikeyStrumline.fixSustainAnim(holdNoteSprite, noteStyle, maxNoteColors, true);
+                holdNoteSprite.updateHitbox();
+
+                foundData.sustainLength = holdNoteSprite.sustainLength;
+                foundData.noteDirection = holdNoteSprite.noteData.data;
+
+                //trace("update sustain " + Timer.stamp() + " : " + charterVisibleHoldNoteSpriteData.length);
+            }
+
+        }
+
+        for (data in charterVisibleHoldNoteSpriteData) {
+            if (!data.seenThisFrame) charterVisibleHoldNoteSpriteData.remove(data);
+        }
     }
 }
