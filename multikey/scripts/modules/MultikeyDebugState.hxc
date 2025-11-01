@@ -1,0 +1,308 @@
+import flixel.FlxG;
+import funkin.Paths;
+import funkin.modding.module.Module;
+import funkin.ui.debug.DebugMenuSubState;
+import funkin.ui.MusicBeatState;
+import funkin.ui.ScriptedMusicBeatState;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import funkin.ui.mainmenu.MainMenuState;
+import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.data.song.SongNoteDataRaw;
+import funkin.ui.FullScreenScaleMode;
+import funkin.Preferences;
+import flixel.FlxSprite;
+import funkin.util.Constants;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.ScriptedStrumline;
+import funkin.Conductor;
+import funkin.util.FileUtil;
+
+import haxe.Json;
+
+import MultikeySustainFixer;
+import MultikeyNoteStyleHelper;
+
+class MultikeyDebugStateLoader extends Module
+{
+    public function new() 
+    {
+        super("MultikeyDebugStateLoader");
+    }
+
+    override function onSubStateOpenEnd(e) {
+		if (Std.isOfType(e.targetState, DebugMenuSubState)) {
+            
+            var state = e.targetState;
+
+            state.createItem("MULTIKEY DEBUG", function() {
+                FlxG.switchState(() -> ScriptedMusicBeatState.init("MultikeyDebugState"));
+            });
+        }
+	}
+}
+
+class MultikeyDebugState extends MusicBeatState
+{
+    var playerStrumline:Strumline;
+    var opponentStrumline:Strumline;
+    var noteStyle:NoteStyle;
+    var localConductor:Conductor;
+    var debugText:FlxText;
+
+    var noteStyleList = [];
+
+    override function create():Void
+    {
+        super.create();
+
+        persistentUpdate = true;
+
+        var menuBG = new FlxSprite();
+        menuBG.loadGraphic(Paths.image('menuDesat'));
+        menuBG.color = 0xFF5e00b0;
+        menuBG.scale.set(1.1, 1.1);
+        menuBG.updateHitbox();
+        menuBG.screenCenter();
+        menuBG.scrollFactor.set(0, 0);
+        add(menuBG);
+
+        debugText = new FlxText(20, 200, 0, "test");
+        debugText.setFormat(Paths.font("vcr.ttf"), 26, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+        add(debugText);
+
+        noteStyleList = NoteStyleRegistry.instance.listEntryIds();
+
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+
+        localConductor = new Conductor();
+        localConductor.forceBPM(100);
+        localConductor.songPosition = 0;
+
+        changeKeyCount(0);
+        
+
+        trace("loaded");
+    }
+
+    function initStrumlines() {
+        if (playerStrumline != null) playerStrumline.destroy();
+        if (opponentStrumline != null) opponentStrumline.destroy();
+
+        playerStrumline = ScriptedStrumline.init('MultikeyStrumline', noteStyle, false, 1.0);
+        opponentStrumline = ScriptedStrumline.init('MultikeyStrumline', noteStyle, false, 1.0);
+        playerStrumline.conductorInUse = localConductor;
+        opponentStrumline.conductorInUse = localConductor;
+
+        add(playerStrumline);
+        add(opponentStrumline);
+
+        final cutoutSize = FullScreenScaleMode.gameCutoutSize.x / 2.5;
+        // Position the player strumline on the right half of the screen
+        playerStrumline.x = (FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET) + (cutoutSize / 2.0); // Classic style
+        // playerStrumline.x = FlxG.width - playerStrumline.width - Constants.STRUMLINE_X_OFFSET; // Centered style
+
+        playerStrumline.y = Preferences.downscroll ? FlxG.height - playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+
+        playerStrumline.zIndex = 1001;
+
+        // Position the opponent strumline on the left half of the screen
+        opponentStrumline.x = Constants.STRUMLINE_X_OFFSET + cutoutSize;
+        opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.height - Constants.STRUMLINE_Y_OFFSET - noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+
+        opponentStrumline.zIndex = 1000;
+
+        opponentStrumline.setNoteSpacing(noteStyle.scriptCall("getMultikeyNoteSpacing"));
+        playerStrumline.setNoteSpacing(noteStyle.scriptCall("getMultikeyNoteSpacing"));
+
+        initMode();
+
+
+        var text = "NoteStyle: " + noteStyle.id;
+        text += "\nKey Count: " + Strumline.KEY_COUNT + " (Q/E)";
+        text += "\nView Mode: " + modes[curMode] + " (TAB)";
+        text += "\nEdit Mode: " + editModes[curEdit] + " (SPACE)";
+        text += "\n\n" + editModes[curEdit] + " = " + getEditData() + " (Edit with Arrow Keys)";
+        debugText.text = text;
+    }
+
+    function changeKeyCount(change:Int) {
+        var target = Strumline.KEY_COUNT + change;
+        var max = noteStyle.scriptCall("getMaxKeyCount");
+        if (target < 1) target = 1;
+        if (target > max) target = max;
+        setKeyCount(target);
+
+        initStrumlines();
+    }
+
+    function setKeyCount(keyCount) {
+        Strumline.KEY_COUNT = keyCount;
+        Strumline.DIRECTIONS = [];
+        for (i in 0...Strumline.KEY_COUNT) Strumline.DIRECTIONS.push(i);
+    }
+
+    var curMode:Int = 0;
+    var modes:Array<String> = ["Default", "Note Overlay", "Splashes", "Hold Covers"];
+    function switchMode(change:Int) {
+        curMode += change;
+        if (curMode < 0) curMode = modes.length-1;
+        if (curMode > modes.length-1) curMode = 0;
+        changeKeyCount(0);
+    }
+
+    function initMode() {
+
+        localConductor.songPosition = 0;
+        switch(curMode) {
+            case 0:
+                var noteData = [];
+                for (i in 0...Strumline.KEY_COUNT) {
+                    noteData.push(new SongNoteDataRaw(300, i, 200));
+                }
+                playerStrumline.applyNoteData(noteData);
+                opponentStrumline.applyNoteData(noteData);
+                playerStrumline.updateNotes();
+                opponentStrumline.updateNotes();
+            case 1:
+                var noteData = [];
+                for (i in 0...Strumline.KEY_COUNT) {
+                    noteData.push(new SongNoteDataRaw(0, i, 0));
+                }
+                playerStrumline.applyNoteData(noteData);
+                opponentStrumline.applyNoteData(noteData);
+                playerStrumline.updateNotes();
+                opponentStrumline.updateNotes();
+            case 2:
+                splashIndex = 0;
+            case 3:
+                var noteData = [];
+                for (i in 0...Strumline.KEY_COUNT) {
+                    noteData.push(new SongNoteDataRaw(0, i, 500));
+                }
+                playerStrumline.applyNoteData(noteData);
+                opponentStrumline.applyNoteData(noteData);
+                playerStrumline.updateNotes();
+                opponentStrumline.updateNotes();
+                for (note in playerStrumline.notes.members) {
+                    note.visible = false;
+                }
+                localConductor.songPosition = 0;
+                for (holdNote in playerStrumline.holdNotes.members) {
+                    playerStrumline.playNoteHoldCover(holdNote);
+                    holdNote.sustainLength = (holdNote.strumTime + holdNote.fullSustainLength) - localConductor.songPosition;
+                    MultikeySustainFixer.fixSustain(holdNote, noteStyle, playerStrumline.maxNoteColors, false);
+                }
+                playerStrumline.updateNotes();  
+        }
+    }
+
+    var curEdit:Int = 0;
+    var editModes:Array<String> = ["Scale", "Spacing", "Note X Offsets", "Strumline Offsets", "Hold Note Offsets", "Hold Cover Offsets", "Splash Offsets"];
+    function switchEditMode(change) {
+        curEdit += change;
+        if (curEdit < 0) curEdit = editModes.length-1;
+        if (curEdit > editModes.length-1) curEdit = 0;
+        changeKeyCount(0);
+    }
+    function editVert(change) {
+        var off = change * (FlxG.keys.pressed.SHIFT ? 10 : 1);
+        var data = noteStyle.getKeyCountData();
+        switch(curEdit) {
+            case 3:
+                data.strumlineOffsets[1] = data.strumlineOffsets[1] + off;
+            case 4:
+                data.holdNoteOffsets[1] = data.holdNoteOffsets[1] + off;
+            case 5:
+                data.holdCoverOffsets[1] = data.holdCoverOffsets[1] + off;
+            case 6:
+                data.splashOffsets[1] = data.splashOffsets[1] + off;
+        }
+        noteStyle.generateMultikeyOffsets();
+        changeKeyCount(0);
+    }
+    function editHori(change) {
+        var off = change * (FlxG.keys.pressed.SHIFT ? 10 : 1);
+        var data = noteStyle.getKeyCountData();
+        switch(curEdit) {
+            case 0:
+                data.noteScale += off*0.01;
+            case 1:
+                data.noteSpacing += off*0.01;
+            case 2:
+                data.noteXOffset += off;
+            case 3:
+                data.strumlineOffsets[0] += off;
+                noteStyle.generateMultikeyOffsets();
+            case 4:
+                data.holdNoteOffsets[0] += off;
+                noteStyle.generateMultikeyOffsets();
+            case 5:
+                data.holdCoverOffsets[0] += off;
+                noteStyle.generateMultikeyOffsets();
+            case 6:
+                data.splashOffsets[0] += off;
+                noteStyle.generateMultikeyOffsets();
+        }
+        changeKeyCount(0);
+    }
+    function getEditData() {
+        var data = noteStyle.getKeyCountData();
+        switch(curEdit) {
+            case 0:
+                return data.noteScale;
+            case 1:
+                return data.noteSpacing;
+            case 2:
+                return data.noteXOffset;
+            case 3:
+                return data.strumlineOffsets;
+            case 4:
+                return data.holdNoteOffsets;
+            case 5:
+                return data.holdCoverOffsets;
+            case 6:
+                return data.splashOffsets;
+        }
+        return 0;
+    }
+
+    var splashTimer:Float = 0;
+    var splashIndex:Int = 0;
+
+    override function update(elapsed:Float) {
+
+        super.update(elapsed);
+        
+        if (FlxG.keys.justPressed.ESCAPE) {
+            setKeyCount(4);
+            FlxG.switchState(() -> new MainMenuState());
+        }
+
+        if (FlxG.keys.justPressed.Q) changeKeyCount(-1);
+        if (FlxG.keys.justPressed.E) changeKeyCount(1);
+        if (FlxG.keys.justPressed.TAB) switchMode(1);
+        if (FlxG.keys.justPressed.SPACE) switchEditMode(1);
+        if (FlxG.keys.justPressed.UP) editVert(-1);
+        if (FlxG.keys.justPressed.DOWN) editVert(1);
+        if (FlxG.keys.justPressed.LEFT) editHori(-1);
+        if (FlxG.keys.justPressed.RIGHT) editHori(1);
+        if (FlxG.keys.pressed.CONTROL && FlxG.keys.justPressed.S) {
+            FileUtil.writeFileReference(noteStyle.id + ".json", MultikeyNoteStyleHelper.prettyJsonString(noteStyle.getMultikeyData()), function(n) {});
+        }
+
+        switch(curMode) {
+            case 1:
+                for (note in playerStrumline.notes.members) note.alpha = 0.5;
+                for (note in opponentStrumline.notes.members) note.alpha = 0.5;
+            case 2:
+                splashTimer -= elapsed;
+                if (splashTimer <= 0) {
+                    splashTimer = 0.2;
+                    playerStrumline.playNoteSplash(splashIndex);
+                    splashIndex++;
+                    if (splashIndex >= Strumline.KEY_COUNT) splashIndex = 0;
+                }
+        }
+    }
+}

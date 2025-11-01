@@ -1,0 +1,164 @@
+import flixel.FlxG;
+import funkin.Paths;
+import flixel.math.FlxMath;
+import funkin.ui.debug.charting.ChartEditorState;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.SustainTrail;
+import funkin.play.notes.ScriptedStrumline;
+import funkin.play.notes.NoteSplash;
+import funkin.play.notes.NoteHoldCover;
+import funkin.Conductor;
+import StringTools;
+
+import MultikeySustainFixer;
+
+class MultikeyStrumline extends Strumline {
+
+    public var noteXOffset:Float = 0;
+    public var maxNoteColors:Int = 4;
+
+    override public function new(noteStyle:NoteStyle, isPlayer:Bool, ?scrollSpeed:Float) {
+        super(noteStyle, isPlayer, scrollSpeed);
+        noteXOffset = noteStyle.scriptCall("getMultikeyNoteXOffset");
+        maxNoteColors = noteStyle.scriptCall("getMaxNoteColors");
+
+        noteSplashes.maxSize = Math.ceil(noteStyle.scriptCall("getMaxKeyCount")*1.5);
+        noteHoldCovers.maxSize = noteStyle.scriptCall("getMaxKeyCount");
+
+        /*if (Strumline.KEY_COUNT > noteStyle.script("getMaxKeyCount")) {
+            Strumline.KEY_COUNT = 4;
+            //throw ""
+        }*/
+    }
+
+    override function getXPos(direction):Float {
+        var pos = 0;
+        //if (Multikey.onMobile && inArrowContorlSchemeMode && isPlayer) pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        var halfKeyCount = Strumline.KEY_COUNT / 2;
+        if (direction < halfKeyCount) {
+            return (-pos * halfKeyCount) + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale.x) + noteXOffset;
+        } else {
+            return pos + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale.x) + noteXOffset;
+        }
+        return pos;
+    }
+
+    override function buildNoteSprite(note) {
+        var noteSprite = super.buildNoteSprite(note);
+
+        noteSprite.direction = noteSprite.noteData.data % Strumline.KEY_COUNT;
+        noteSprite.animation.play(noteStyle.scriptCall("getMultikeyNoteDirectionName", [noteSprite.direction]) + "Scroll");
+
+        noteSprite.x -= getXPos(Strumline.DIRECTIONS[note.getDirection() % Strumline.KEY_COUNT]);
+        noteSprite.x += getXPos(noteSprite.direction);
+
+        return noteSprite;
+    }
+
+    override function buildHoldNoteSprite(note) {
+        var holdNoteSprite = super.buildHoldNoteSprite(note);
+        
+        holdNoteSprite.noteDirection = holdNoteSprite.noteData.data % Strumline.KEY_COUNT;
+        holdNoteSprite.x -= getXPos(Strumline.DIRECTIONS[note.getDirection() % Strumline.KEY_COUNT]);
+        holdNoteSprite.x += getXPos(holdNoteSprite.noteDirection);
+
+        holdNoteSprite.x += holdNoteSprite.width / 2;
+        MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteColors, false);
+        holdNoteSprite.x -= holdNoteSprite.width / 2;
+
+        return holdNoteSprite;
+    }
+
+    
+    override function playNoteHoldCover(holdNote) {
+        if (!showNotesplash) return;
+        if (!noteStyle.isHoldNoteCoverEnabled()) return;
+
+        var cover:NoteHoldCover = this.constructNoteHoldCover();
+
+        if (cover != null)
+        {
+            cover.holdNote = holdNote;
+            holdNote.cover = cover;
+            cover.visible = true;
+
+            //custom change start
+            var possibleDirs = ["Purple", "Blue", "Green", "Red", "Unknown"];
+            var dirAboutToPlay = possibleDirs[Math.min(holdNote.noteDirection % Strumline.KEY_COUNT, 4)];
+            noteStyle.scriptCall("forceChangeHoldCoverAnim", [cover, dirAboutToPlay, holdNote.noteDirection % Strumline.KEY_COUNT]);
+            //custom change end
+            cover.playStart();
+
+            cover.x = this.x;
+            cover.x += getXPos(holdNote.noteDirection);
+            cover.x += Strumline.STRUMLINE_SIZE / 2;
+            cover.x -= cover.width / 2;
+            cover.x += noteStyle.getHoldCoverOffsets()[0] * cover.scale.x;
+            cover.x += -12; // hardcoded adjustment, because we are evil.
+
+            cover.y = this.y;
+            cover.y += Strumline.INITIAL_OFFSET;
+            cover.y += Strumline.STRUMLINE_SIZE / 2;
+            cover.y += noteStyle.getHoldCoverOffsets()[1] * cover.scale.y;
+            cover.y += -96; // hardcoded adjustment, because we are evil.
+        }
+    }
+    
+    override function playNoteSplash(direction):Void
+    {
+        if (!showNotesplash) return;
+        if (!noteStyle.isNoteSplashEnabled()) return;
+
+        var splash:NoteSplash = this.constructNoteSplash();
+
+        if (splash != null)
+        {
+            //custom change start
+            var dir = noteStyle.scriptCall("getMultikeyNoteDirectionName", [direction]).toUpperCase();
+
+            //splash.play(direction);
+            {
+                var animationAmount:Int = splash.animation.getAnimationList().filter(function(anim) return StringTools.startsWith(anim.name, 'splash' + dir)).length - 1;
+                var variant = FlxG.random.int(0, animationAmount);
+
+                // splashUP0, splashUP1, splashRIGHT0, etc.
+                // the animations are processed via `NoteStyle.fetchSplashAnimationData()` in this format
+                splash.playAnimation('splash' + dir + variant);
+
+                //if (splash.animation.curAnim == null) return;
+
+                if (splash.animation.curAnim != null) {
+                    // Vary the speed of the animation a bit.
+                    splash.animation.curAnim.frameRate = splash.splashFramerate + FlxG.random.int(-splash.splashFramerateVariance, splash.splashFramerateVariance);
+
+                    // Center the animation on the note splash.
+                    splash.offset.set(splash.width * 0.3, splash.height * 0.3);
+                }
+            }
+            //custom change end
+
+            splash.x = this.x;
+            splash.x += getXPos(direction);
+            splash.x += Strumline.INITIAL_OFFSET;
+            splash.x += noteStyle.getSplashOffsets()[0] * splash.scale.x;
+
+            splash.y = this.y;
+            splash.y -= Strumline.INITIAL_OFFSET;
+            splash.y += noteStyle.getSplashOffsets()[1] * splash.scale.y;
+        }
+    }
+    
+    function updateNotes() {
+        if (noteData.length == 0) return;
+
+        super.updateNotes();
+
+        for (holdNote in holdNotes.members)
+        {
+            if (holdNote == null || !holdNote.alive) continue;
+            if (conductorInUse.songPosition > holdNote.strumTime && holdNote.hitNote) {
+                MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteColors, false);
+            }
+        }
+    }
+}

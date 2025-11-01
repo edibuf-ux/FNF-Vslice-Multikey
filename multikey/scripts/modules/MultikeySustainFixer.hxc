@@ -1,0 +1,134 @@
+import funkin.play.notes.SustainTrail;
+import funkin.ui.debug.charting.ChartEditorState;
+import funkin.play.notes.Strumline;
+import flixel.math.FlxMath;
+
+class MultikeySustainFixer {
+    public static function fixSustain(sustain, noteStyle, maxColors, inCharter = false) {
+        if (sustain.graphic == null) return;
+        sustain.customVertexData = true;
+        
+        var maxColorsDoubled = maxColors * 2;
+
+        if (inCharter) {
+            sustain.zoom = 1.0;
+            sustain.zoom *= noteStyle.fetchHoldNoteScale();
+            sustain.zoom *= 0.7;
+            sustain.zoom *= ChartEditorState.GRID_SIZE / Strumline.STRUMLINE_SIZE;
+            sustain.zoom /= noteStyle.scriptCall("getMultikeyNoteScale");
+        }
+
+        sustain.graphicWidth = sustain.graphic.width / maxColorsDoubled * sustain.zoom;
+        sustain.graphicHeight = SustainTrail.sustainHeight(sustain.sustainLength, sustain.parentStrumline?.scrollSpeed ?? 1.0);
+
+        var dir = noteStyle.scriptCall("getMultikeyNoteDirectionIndex", [sustain.noteDirection]);
+        var vertices = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        var uvtData = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+        var clipHeight:Float = FlxMath.bound(SustainTrail.sustainHeight(sustain.sustainLength + sustain.strumTime, sustain.parentStrumline?.scrollSpeed ?? 1.0), 0, sustain.graphicHeight);
+        if (clipHeight <= 0.1)
+        {
+            sustain.visible = false;
+            return;
+        }
+        else
+        {
+            sustain.visible = true;
+        }
+
+        
+
+        var bottomHeight:Float = sustain.graphic.height * sustain.zoom * sustain.endOffset;
+        var partHeight:Float = clipHeight - bottomHeight;
+
+        {
+            // ===HOLD VERTICES==
+            // Top left
+            vertices[0 * 2] = 0.0; // Inline with left side
+            vertices[0 * 2 + 1] = sustain.flipY ? clipHeight : sustain.graphicHeight - clipHeight;
+
+            // Top right
+            vertices[1 * 2] = sustain.graphicWidth;
+            vertices[1 * 2 + 1] = vertices[0 * 2 + 1]; // Inline with top left vertex
+
+            // Bottom left
+            vertices[2 * 2] = 0.0; // Inline with left side
+            if (partHeight > 0) {
+                vertices[2 * 2 + 1] = sustain.flipY ? 0.0 + bottomHeight : vertices[1] + partHeight;
+            } else {
+                vertices[2 * 2 + 1] = vertices[0 * 2 + 1]; // Inline with top left vertex (no partHeight available)
+            }
+
+            // Bottom right
+            vertices[3 * 2] = sustain.graphicWidth;
+            vertices[3 * 2 + 1] = vertices[2 * 2 + 1]; // Inline with bottom left vertex
+
+            // ===HOLD UVs===
+
+            // The UVs are a bit more complicated.
+            // UV coordinates are normalized, so they range from 0 to 1.
+            // We are expecting an image containing 8 horizontal segments, each representing a different colored hold note followed by its end cap.
+
+            uvtData[0 * 2] = 1 / maxColors * (dir); // 0%/25%/50%/75% of the way through the image
+            uvtData[0 * 2 + 1] = (-partHeight) / sustain.graphic.height / sustain.zoom; // top bound
+            // Top left
+
+            // Top right
+            uvtData[1 * 2] = uvtData[0 * 2] + 1 / maxColorsDoubled; // 12.5%/37.5%/62.5%/87.5% of the way through the image (1/8th past the top left)
+            uvtData[1 * 2 + 1] = uvtData[0 * 2 + 1]; // top bound
+
+            // Bottom left
+            uvtData[2 * 2] = uvtData[0 * 2]; // 0%/25%/50%/75% of the way through the image
+            uvtData[2 * 2 + 1] = 0.0; // bottom bound
+
+            // Bottom right
+            uvtData[3 * 2] = uvtData[1 * 2]; // 12.5%/37.5%/62.5%/87.5% of the way through the image (1/8th past the top left)
+            uvtData[3 * 2 + 1] = uvtData[2 * 2 + 1]; // bottom bound
+
+            // === END CAP VERTICES ===
+            // Top left
+            vertices[4 * 2] = vertices[2 * 2]; // Inline with bottom left vertex of hold
+            vertices[4 * 2 + 1] = vertices[2 * 2 + 1]; // Inline with bottom left vertex of hold
+
+            // Top right
+            vertices[5 * 2] = vertices[3 * 2]; // Inline with bottom right vertex of hold
+            vertices[5 * 2 + 1] = vertices[3 * 2 + 1]; // Inline with bottom right vertex of hold
+
+            // Bottom left
+            vertices[6 * 2] = vertices[2 * 2]; // Inline with left side
+            vertices[6 * 2 + 1] = sustain.flipY ? (sustain.graphic.height * (-sustain.bottomClip + sustain.endOffset) * sustain.zoom) : (sustain.graphicHeight + sustain.graphic.height * (sustain.bottomClip - sustain.endOffset) * sustain.zoom);
+
+            // Bottom right
+            vertices[7 * 2] = vertices[3 * 2]; // Inline with right side
+            vertices[7 * 2 + 1] = vertices[6 * 2 + 1]; // Inline with bottom of end cap
+
+            // === END CAP UVs ===
+            // Top left
+            uvtData[4 * 2] = uvtData[2 * 2] + 1 / maxColorsDoubled; // 12.5%/37.5%/62.5%/87.5% of the way through the image (1/8th past the top left of hold)
+            uvtData[4 * 2 + 1] = if (partHeight > 0)
+            {
+            0;
+            }
+            else
+            {
+            (bottomHeight - clipHeight) / sustain.zoom / sustain.graphic.height;
+            };
+
+            // Top right
+            uvtData[5 * 2] = uvtData[4 * 2] + 1 / maxColorsDoubled; // 25%/50%/75%/100% of the way through the image (1/8th past the top left of cap)
+            uvtData[5 * 2 + 1] = uvtData[4 * 2 + 1]; // top bound
+
+            // Bottom left
+            uvtData[6 * 2] = uvtData[4 * 2]; // 12.5%/37.5%/62.5%/87.5% of the way through the image (1/8th past the top left of hold)
+            uvtData[6 * 2 + 1] = sustain.bottomClip; // bottom bound
+
+            // Bottom right
+            uvtData[7 * 2] = uvtData[5 * 2]; // 25%/50%/75%/100% of the way through the image (1/8th past the top left of cap)
+            uvtData[7 * 2 + 1] = uvtData[6 * 2 + 1]; // bottom bound
+        }
+
+        sustain.setVertices(vertices);
+        sustain.setUVTData(uvtData);
+        sustain.updateHitbox();
+    }
+}

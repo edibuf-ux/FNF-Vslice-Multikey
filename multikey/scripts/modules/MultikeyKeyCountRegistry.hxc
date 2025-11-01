@@ -1,0 +1,85 @@
+import flixel.FlxG;
+import funkin.Paths;
+import funkin.play.PlayState;
+import flixel.math.FlxMath;
+import funkin.ui.debug.charting.ChartEditorState;
+import funkin.play.notes.Strumline;
+import funkin.play.notes.SustainTrail;
+import funkin.play.notes.ScriptedStrumline;
+import funkin.play.notes.NoteSplash;
+import funkin.play.notes.NoteHoldCover;
+import funkin.modding.module.Module;
+import funkin.data.song.SongRegistry;
+import funkin.util.assets.DataAssets;
+import funkin.util.Constants;
+import funkin.Conductor;
+import haxe.Json;
+import funkin.util.ReflectUtil;
+import StringTools;
+
+typedef MultikeyKeyCounts = 
+{
+    var keyCounts:Map<String, Int>;
+}
+
+class MultikeyKeyCountRegistry extends Module
+{
+    static var entries = ["" => null];
+    public function new() 
+    {
+        super("MultikeyKeyCountRegistry");      
+        loadEntries();
+    }
+
+    public function loadEntries()
+    {
+        entries.clear();
+        var entryIdList:Array<String> = DataAssets.listDataFilesInPath('songs/', '-metadata.json').map(function(songDataPath:String):String {
+            return songDataPath.split('/')[0];
+        });
+        
+        for (song in entryIdList) 
+        {
+            var songData = SongRegistry.instance.fetchEntry(song);
+            if (songData == null) continue;
+
+            for (variation in songData.variations)
+            {
+                var suffix:String = variation != Constants.DEFAULT_VARIATION ? "-" + variation : "";
+
+                var path = Paths.file("data/songs/" + song + "/keyCounts" + suffix + ".json");
+                if (Assets.exists(path))
+                {
+                    var entryID = song+":"+variation;
+                    var entry:MultikeyKeyCounts = {keyCounts: ["" => 4]};
+                    entry.keyCounts.clear(); //clearing since we needed it initialized as a map by creating it with a valid key first
+
+                    var data = Json.parse(Assets.getText(path));
+                    if (data.keyCounts == null) continue;
+
+                    var logString = "";
+                    for (diff in ReflectUtil.fields(data.keyCounts))
+                    {
+                        var keyCount = ReflectUtil.getProperty(data.keyCounts, diff);
+                        entry.keyCounts.set(diff, keyCount);
+                        logString += ", " + diff + " = " + keyCount; 
+                    }
+
+                    trace('  Loaded entry data: KeyCounts(' + song + logString + ")");
+                    entries.set(entryID, entry);
+                }
+            }
+        }
+    }
+
+    public static function fetchEntry(song:String, variation:String, difficulty:String) {
+        var entryID = song+":"+variation;
+        if (!hasEntry(song, variation, difficulty)) return 4;
+        return entries.get(entryID).keyCounts.get(difficulty);
+    }
+    public static function hasEntry(song:String, variation:String, difficulty:String) {
+        var entryID = song+":"+variation;
+        if (entries.exists(entryID)) return entries.get(entryID).keyCounts.exists(difficulty);
+        return false;
+    }
+}

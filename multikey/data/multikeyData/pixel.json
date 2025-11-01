@@ -1,7 +1,7 @@
 {
     "strumNames": ["Left","Down","Up","Right","Space","Left","Down","Up","Right"],
     "noteColors": ["Purple","Blue","Green","Red","White","Yellow","Violet","Darkred","Darkblue"],
-    "noteColorsRGB": ["0xFFC34B9A", "0xFF00FFFF", "0xFF12FB06", "0xFFF9393F", "0xFFcccccc", "0xFFf4f400", "0xFF823cff", "0xFFe40000", "0x0033ff"],
+    "noteColorsRGB": ["0xFFC34B9A", "0xFF00FFFF", "0xFF12FB06", "0xFFF9393F", "0xFFcccccc", "0xFFf4f400", "0xFF823cff", "0xFFe40000", "0xFF0033ff"],
     "noteDirections": ["Left","Down","Up","Right","Space","AltLeft","AltDown","AltUp","AltRight"],
     "notePrefix": "note",
     "staticPrefix": "static",

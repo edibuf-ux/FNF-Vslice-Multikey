@@ -1,98 +1,21 @@
 import funkin.Paths;
 import funkin.graphics.FunkinSprite;
-import funkin.play.PlayState;
 import flixel.FlxG;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
 import funkin.data.animation.AnimationDataUtil;
 import funkin.util.Constants;
-import haxe.Json;
 import funkin.util.assets.FlxAnimationUtil;
+
+import MultikeyNoteStyleHelper;
 
 class FunkinNoteStyle extends NoteStyle
 {
     public var multikeyData = null;
 	function new() {
 		super('funkin');
-
-        var path = Paths.file("data/multikeyData/" + this.id + ".json");
-        if (Assets.exists(path)) {
-            multikeyData = Json.parse(Assets.getText(path));
-        } else {
-            throwMultikeyError("Missing multikey data json");
-        }
-        validateMultikeyData();
-        generateOffsets();
+        MultikeyNoteStyleHelper.initMultikeyData(this);
 	}
-
-    function validateMultikeyData() {
-
-        if (multikeyData.keyData == null || multikeyData.keyData.length == 0) throwMultikeyError("No Key data found");
-        if (multikeyData.splashData == null || multikeyData.splashData.length == 0) throwMultikeyError("No splash data found");
-        if (multikeyData.holdCoverData == null || multikeyData.holdCoverData.length == 0) throwMultikeyError("No hold cover data found");
-        if (multikeyData.strumNames == null || multikeyData.strumNames.length == 0) throwMultikeyError("No strum name data found");
-        if (multikeyData.noteColors == null || multikeyData.noteColors.length == 0) throwMultikeyError("No note color data found");
-        if (multikeyData.noteColorsRGB == null || multikeyData.noteColorsRGB.length == 0) throwMultikeyError("No note rgb color data found");
-        if (multikeyData.noteDirections == null || multikeyData.noteDirections.length == 0) throwMultikeyError("No note direction data found");
-        
-        if (multikeyData.notePrefix == null) multikeyData.notePrefix = "note";
-        if (multikeyData.staticPrefix == null) multikeyData.staticPrefix = "static";
-        if (multikeyData.pressPrefix == null) multikeyData.pressPrefix = "press";
-        if (multikeyData.confirmPrefix == null) multikeyData.confirmPrefix = "confirm";
-
-        var keyCount = 0;
-        for (data in multikeyData.keyData) {
-            keyCount++;
-
-            for (index in data.noteDirectionIndexes) {
-                if (index > multikeyData.strumNames.length-1) throwMultikeyError("Note direction index too high for strum names!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.strumNames.length + ")");
-                if (index > multikeyData.noteColors.length-1) throwMultikeyError("Note direction index too high for note colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColors.length + ")");
-                if (index > multikeyData.noteColorsRGB.length-1) throwMultikeyError("Note direction index too high for note rgb colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColorsRGB.length + ")");
-                if (index > multikeyData.noteDirections.length-1) throwMultikeyError("Note direction index too high for note directions!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteDirections.length + ")");
-            }
-
-            for (index in data.singDirectionIndexes) {
-                if (index > 3) throwMultikeyError("Sing direction index too high!" + "(Keycount: " + keyCount + ", Index: " + index + ", Max Index: 3)");
-            }
-
-            if (data.noteDirectionIndexes.length != keyCount) throwMultikeyError("Mismatching note direction array length for keycount!" + " (Keycount: " + keyCount + ", Array Length: " + data.noteDirectionIndexes.length + ")");
-            if (data.singDirectionIndexes.length != keyCount) throwMultikeyError("Mismatching sing direction array length for keycount!" + " (Keycount: " + keyCount + ", Array Length: " + data.singDirectionIndexes.length + ")");
-
-            if (data.noteScale == null) data.noteScale = 1.0;
-            if (data.noteSpacing == null) data.noteSpacing = 1.0;
-            if (data.noteXOffset == null) data.noteXOffset = 0.0;
-            if (data.strumlineOffsets == null) data.strumlineOffsets = [0.0, 0.0];
-            if (data.holdNoteOffsets == null) data.holdNoteOffsets = [0.0, 0.0];
-            if (data.holdCoverOffsets == null) data.holdCoverOffsets = [0.0, 0.0];
-            if (data.splashOffsets == null) data.splashOffsets = [0.0, 0.0];
-        }
-
-        //key indexes are different from key counts, you can which means you can share multiple note colors by using the same index
-        var keyIndex = 0;
-        for (data in multikeyData.splashData) {
-            if (data.length == 0) throwMultikeyError("Splash for key index '" + keyIndex + "' has no animations?");
-            keyIndex++;
-        }
-
-        keyIndex = 0;
-        for (data in multikeyData.holdCoverData) {
-            if (data.start == null) throwMultikeyError("No start animation for hold cover at key index '" + keyIndex + "'");
-            if (data.hold == null) throwMultikeyError("No hold animation for hold cover at key index '" + keyIndex + "'");
-            if (data.end == null) throwMultikeyError("No end animation for hold cover at key index '" + keyIndex + "'");
-            keyIndex++;
-        }
-
-        var maxNoteColors = multikeyData.noteColors.length;
-        if (maxNoteColors != multikeyData.noteColorsRGB.length) throwMultikeyError("Mismatching note rgb color array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note rgb colors length: " + multikeyData.noteColorsRGB.length + ")");
-        if (maxNoteColors != multikeyData.strumNames.length) throwMultikeyError("Mismatching strum names array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Strum names length: " + multikeyData.strumNames.length + ")");
-        if (maxNoteColors != multikeyData.noteDirections.length) throwMultikeyError("Mismatching note directions array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note directions length: " + multikeyData.noteDirections.length + ")");
-        if (maxNoteColors != multikeyData.splashData.length) throwMultikeyError("Mismatching splash data array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Splash data length: " + multikeyData.splashData.length + ")");
-        if (maxNoteColors != multikeyData.holdCoverData.length) throwMultikeyError("Mismatching hold cover data array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Hold cover data length: " + multikeyData.holdCoverData.length + ")");
-    }
-
-    inline function throwMultikeyError(error) {
-        throw "Multikey Error for notestyle '" + this.id + "': " + error;
-    }
 
     ///////////custom functions
 
@@ -177,7 +100,11 @@ class FunkinNoteStyle extends NoteStyle
     override public function getHoldCoverOffsets() { return _holdCoverOffsets[Strumline.KEY_COUNT-1]; }
     override public function getHoldNoteOffsets() { return _holdNoteOffsets[Strumline.KEY_COUNT-1]; }
     
-    function generateOffsets() {
+    public function generateMultikeyOffsets() {
+        _strumlineOffsets = [];
+        _splashOffsets = [];
+        _holdCoverOffsets = [];
+        _holdNoteOffsets = [];
         for (i in 0...getMaxKeyCount()) {
             _strumlineOffsets.push(addOffsetArrays(multikeyData.keyData[i].strumlineOffsets, _data?.assets?.noteStrumline?.offsets ?? fallback?.getStrumlineOffsets() ?? [0.0, 0.0]));
             _splashOffsets.push(addOffsetArrays(multikeyData.keyData[i].splashOffsets, _data?.assets?.noteSplash?.offsets ?? fallback?.getSplashOffsets() ?? [0.0, 0.0]));
@@ -211,7 +138,8 @@ class FunkinNoteStyle extends NoteStyle
         }
     }
 
-    public function buildHoldCoverSprite(target:NoteHoldCover):Void
+    //Forked function
+    override public function buildHoldCoverSprite(target:NoteHoldCover):Void
     {
         // NoteHoldCover has "glow" and "sparks". Right now it only implements "glow"
         // but "sparks" I believe is meant to be used for the ending of the hold note
@@ -234,6 +162,7 @@ class FunkinNoteStyle extends NoteStyle
         buildHoldCoverAnimations(target);
     }
 
+    //Forked function
     override function buildHoldCoverFrameForDirection(direction)
     {
         //custom change start
@@ -261,6 +190,7 @@ class FunkinNoteStyle extends NoteStyle
         return atlas;
     }
 
+    //Forked function
     override function getHoldCoverDirectionAssetPath(direction, raw = false) {
         if (raw)
         {

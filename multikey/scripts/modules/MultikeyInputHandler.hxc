@@ -6,6 +6,7 @@ import funkin.Conductor;
 import funkin.play.notes.Strumline;
 import funkin.util.Constants;
 import flixel.FlxG;
+import flixel.FlxSprite;
 import funkin.util.ReflectUtil;
 import funkin.util.FlxGamepadUtil;
 import funkin.mobile.ui.FunkinHint;
@@ -121,19 +122,6 @@ class MultikeyInputHandler extends Module
 		}
 	}
 
-	function createHintLane(x:Float, y:Float, noteDirection:Int, width:Int, height:Int, color:FlxColor = 0xFFFFFFFF, label:Bool = true,
-      gradient:Bool = true) {
-		var hitbox = PlayState.instance.hitbox;
-		var noteDir = noteDirection;
-		final hint:FunkinHint = new FunkinHint(x, y, noteDirection, label ? hitbox.createHintLaneLabelGraphic(width, height, Math.floor(height * 0.035), color) : null);
-		hint.loadGraphic(hitbox.createHintLaneGraphic(width, height, color, gradient));
-		hint.onDown.add(function() {inputDown(noteDir, PreciseInputManager.getCurrentTimestamp());});
-		hint.onUp.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
-		hint.onOut.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
-		hint.initTween(FunkinHintAlphaStyle.INVISIBLE_TILL_PRESS);
-		return hint;
-	  }
-
 	inline function throwMultikeyError(error) {
         throw "Multikey Input Handler Error: " + error;
     }
@@ -155,8 +143,7 @@ class MultikeyInputHandler extends Module
 
 	function inputDown(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
-		timestamp *= Constants.NS_PER_MS;
-
+		
 		if (!_keysHeld[index]) {
 			if (PlayState.instance.isGamePaused) return;
 			inputPressQueue.push({
@@ -168,8 +155,6 @@ class MultikeyInputHandler extends Module
 	}
 	function inputUp(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
-
-        timestamp *= Constants.NS_PER_MS;
 
 		if (_keysHeld[index]) {
 			if (PlayState.instance.isGamePaused) return;
@@ -186,6 +171,7 @@ class MultikeyInputHandler extends Module
     {
         var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
 		var index = getIndexFromKey(key);
+		timestamp *= Constants.NS_PER_MS;
         inputDown(index, timestamp);
     }
 
@@ -193,6 +179,7 @@ class MultikeyInputHandler extends Module
     {
         var key:FlxKey = PreciseInputManager.convertKeyCode(keyCode);
 		var index = getIndexFromKey(key);
+		timestamp *= Constants.NS_PER_MS;
 		inputUp(index, timestamp);
     }
 
@@ -201,6 +188,7 @@ class MultikeyInputHandler extends Module
     {
         var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
         var index = getIndexFromButton(buttonId);
+		timestamp *= Constants.NS_PER_MS;
         inputDown(index, timestamp);
     }
 
@@ -208,6 +196,7 @@ class MultikeyInputHandler extends Module
     {
         var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
 		var index = getIndexFromButton(buttonId);
+		timestamp *= Constants.NS_PER_MS;
         inputUp(index, timestamp);
     }
     
@@ -236,6 +225,8 @@ class MultikeyInputHandler extends Module
 				_deviceBinds.push(callbacks);
 			}
 		}
+
+		//initArrowStyle(PlayState.instance);
 
 		createMobileHitboxes(PlayState.instance);
 	}
@@ -267,23 +258,101 @@ class MultikeyInputHandler extends Module
 		}
 		state.hitbox.trackedInputs = [];
 
-        /*if (originalControlsScheme == "Four Lanes" || originalControlsScheme == "Arrows")*/ {
-
-            final hintWidth:Int = Math.floor(FlxG.width / Strumline.DIRECTIONS.length);
-            final hintHeight:Int = FlxG.height;
-			var noteStyle = state.playerStrumline.noteStyle;
-
-            for (i in 0...Strumline.DIRECTIONS.length)
-            {
-				var color = Std.parseInt(noteStyle.scriptCall("getMultikeyNoteColorRGB", [i]));
-                state.hitbox.add(createHintLane(i * hintWidth, 0, i, hintWidth, hintHeight,
-                    color, true, true));
-            }
-        }
+        //if (Multikey.originalControlsScheme == "Four Lanes") {
+			initLaneStyle(state);
+		//} else {
+			//initArrowStyle(state);
+		//}
 
 		initPauseSprites(state);
     }
 
+	function initLaneStyle(state) {
+		final hintWidth:Int = Math.floor(FlxG.width / Strumline.DIRECTIONS.length);
+		final hintHeight:Int = FlxG.height;
+		var noteStyle = state.playerStrumline.noteStyle;
+
+		for (i in 0...Strumline.DIRECTIONS.length)
+		{
+			var color = Std.parseInt(noteStyle.scriptCall("getMultikeyNoteColorRGB", [i]));
+			state.hitbox.add(createHintLane(i * hintWidth, 0, i, hintWidth, hintHeight,
+				color, true, true));
+		}
+	}
+	function createHintLane(x:Float, y:Float, noteDirection:Int, width:Int, height:Int, color:FlxColor = 0xFFFFFFFF, label:Bool = true,
+      gradient:Bool = true) {
+		var hitbox = PlayState.instance.hitbox;
+		var noteDir = noteDirection;
+		final hint:FunkinHint = new FunkinHint(x, y, noteDirection, label ? hitbox.createHintLaneLabelGraphic(width, height, Math.floor(height * 0.035), color) : null);
+		hint.loadGraphic(hitbox.createHintLaneGraphic(width, height, color, gradient));
+		hint.onDown.add(function() {inputDown(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onUp.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onOut.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.initTween(FunkinHintAlphaStyle.INVISIBLE_TILL_PRESS);
+		return hint;
+	}
+	function initArrowStyle(state) {
+		var noteStyle = state.playerStrumline.noteStyle;
+
+		final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+        final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification * noteStyle.scriptCall("getMultikeyNoteSpacing");
+		var noteXOffset = noteStyle.scriptCall("getMultikeyNoteXOffset");
+
+		final hintWidth:Int = 146 * noteStyle.scriptCall("getMultikeyNoteScale");// * noteStyle.scriptCall("getMultikeyNoteSpacing");
+        final hintHeight:Int = 149;
+
+		var width = Strumline.KEY_COUNT * Strumline.NOTE_SPACING * playerStrumlineScale * playerNoteSpacing;
+		final xPos = -30 + (FlxG.width - width) / 2 + Constants.STRUMLINE_X_OFFSET;
+
+		final yPos:Int = 120 + Math.floor(FlxG.height - hintHeight * 2 - 24);
+
+        for (i in 0...Strumline.DIRECTIONS.length)
+        {
+			state.hitbox.add(createHintTransparentNote(xPos + getXPos(i, playerNoteSpacing, playerStrumlineScale, noteXOffset) + (hintWidth/2), yPos, i, hintWidth,
+				hintHeight));
+
+			/*var sprite = new FlxSprite(xPos + getXPos(i, playerNoteSpacing, playerStrumlineScale, noteXOffset) + (hintWidth/2), yPos);
+			sprite.x += Strumline.INITIAL_OFFSET;
+			sprite.makeGraphic(1, 1, 0xFFFFFFFF);
+			sprite.alpha = 0.5;
+			sprite.setSize(hintWidth, hintHeight);
+			sprite.setGraphicSize(hintWidth, hintHeight); sprite.updateHitbox();
+			*/
+			//sprite.centerOffsets();
+    		//sprite.centerOrigin();
+
+			///
+			//sprite.cameras = [PlayState.instance.camHUD];
+			//PlayState.instance.add(sprite);
+        }
+	}
+	function getXPos(direction, noteSpacingScale, strumlineScale, noteXOffset):Float {
+        var pos = 0;
+        //pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        var halfKeyCount = Strumline.KEY_COUNT / 2;
+        if (direction < halfKeyCount) {
+            return (-pos * halfKeyCount) + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale) + noteXOffset;
+        } else {
+            return pos + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale) + noteXOffset;
+        }
+        return pos;
+    }
+	function createHintTransparentNote(x:Float, y:Float, noteDirection, width:Int, height:Int):FunkinHint
+	{
+		var noteDir = noteDirection;
+		final hint:FunkinHint = new FunkinHint(x, y, noteDirection, null);
+		hint.alpha = 0;
+		hint.setSize(width, height);
+		hint.onDown.add(function() {inputDown(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onUp.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.onOut.add(function() {inputUp(noteDir, PreciseInputManager.getCurrentTimestamp());});
+		hint.centerOffsets();
+    	hint.centerOrigin();
+		return hint;
+	}
+
+	//for some reason need to remake these? it crashes otherwise
 	function initPauseSprites(state)
 	{
 		state.remove(state.pauseCircle);
@@ -339,6 +408,7 @@ class MultikeyInputHandler extends Module
         }
     }
 	function onSongRetry(e) {
+		if (onMobile) setupControlCallbacks();
 		initControls();
 	}
 
