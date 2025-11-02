@@ -25,6 +25,7 @@ import haxe.Json;
 import funkin.Preferences;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
+import funkin.ui.FullScreenScaleMode;
 
 import MultikeyKeyCountRegistry;
 import MultikeySustainFixer;
@@ -123,7 +124,10 @@ class Multikey extends Module
         {
             setKeyCount(keyCount);
             setupMultikeyStrumlines(PlayState.instance, true);
+            
         }
+        //fixMobileArrows(PlayState.instance, true);
+        //trace(PlayState.instance.playerStrumline);
         _regenNoteData = true;
     }
 
@@ -158,12 +162,54 @@ class Multikey extends Module
         } 
         else 
         {
-            if (onMobile) 
+            if (onMobile)
             {
                 originalControlsScheme = Preferences.controlsScheme;
-                Preferences.controlsScheme = "Four Lanes"; //stops a crash, will redo later
-            }            
+                if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes"; //stops a crash, will redo later
+            }
         }
+        ModuleHandler.callEvent(new ScriptEvent("POST_SETUP_MULTIKEY_STRUMLINES"));
+    }
+
+    function fixMobileArrows(state, retry = false) {
+        if (!onMobile) return;
+        
+
+        {
+            final cutoutSize = FullScreenScaleMode.gameCutoutSize.x / 2.5;
+            state.opponentStrumline.x = Constants.STRUMLINE_X_OFFSET + cutoutSize;
+            state.playerStrumline.y = Preferences.downscroll ? FlxG.height - state.playerStrumline.height - Constants.STRUMLINE_Y_OFFSET - state.noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
+        }
+
+        final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+        final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+        final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
+
+        if (!retry) {
+            state.playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
+            state.playerStrumline.setNoteSpacing(playerNoteSpacing * state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
+            for (strum in state.playerStrumline)
+            {
+                strum.width *= 2;
+            }
+            state.opponentStrumline.enterMiniMode(0.4 * amplification);
+        }
+
+
+        var height = state.playerStrumline.members[0].height;
+
+        state.playerStrumline.x = (FlxG.width - state.playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
+        state.playerStrumline.y = (FlxG.height - height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
+        if (state.currentChart?.noteStyle != "pixel")
+        {
+            if (platform == HostPlatform.ANDROID) state.playerStrumline.y += 10;
+        }
+        else
+        {
+            state.playerStrumline.y -= 10;
+        }
+        state.opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
+        state.opponentStrumline.x -= 30;
     }
 
     var _regenNoteData = false;
@@ -301,35 +347,6 @@ class Multikey extends Module
 
         var singDir = PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [event.dir]);
         PlayState.instance.currentStage.getBoyfriend()?.playSingAnimation(singDir, true);
-    }
-
-    function fixMobileArrows(state) {
-        if (!onMobile) return;
-
-        final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
-        final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
-        final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
-
-        state.playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
-        state.playerStrumline.setNoteSpacing(playerNoteSpacing * state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
-        for (strum in state.playerStrumline)
-        {
-            strum.width *= 2;
-        }
-        state.opponentStrumline.enterMiniMode(0.4 * amplification);
-
-        state.playerStrumline.x = (FlxG.width - state.playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
-        state.playerStrumline.y = (FlxG.height - state.playerStrumline.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
-        if (state.currentChart?.noteStyle != "pixel")
-        {
-            if (platform == HostPlatform.ANDROID) state.playerStrumline.y += 10;
-        }
-        else
-        {
-            state.playerStrumline.y -= 10;
-        }
-        state.opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
-        state.opponentStrumline.x -= 30;
     }
 
     ///////////////////////////

@@ -101,6 +101,10 @@ class PixelNoteStyle extends NoteStyle
     override public function getHoldNoteOffsets() { return _holdNoteOffsets[Strumline.KEY_COUNT-1]; }
     
     public function generateMultikeyOffsets() {
+        _strumlineOffsets = [];
+        _splashOffsets = [];
+        _holdCoverOffsets = [];
+        _holdNoteOffsets = [];
         for (i in 0...getMaxKeyCount()) {
             _strumlineOffsets.push(addOffsetArrays(multikeyData.keyData[i].strumlineOffsets, _data?.assets?.noteStrumline?.offsets ?? fallback?.getStrumlineOffsets() ?? [0.0, 0.0]));
             _splashOffsets.push(addOffsetArrays(multikeyData.keyData[i].splashOffsets, _data?.assets?.noteSplash?.offsets ?? fallback?.getSplashOffsets() ?? [0.0, 0.0]));

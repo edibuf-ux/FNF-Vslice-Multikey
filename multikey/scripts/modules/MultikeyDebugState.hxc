@@ -71,6 +71,8 @@ class MultikeyDebugState extends MusicBeatState
         debugText.setFormat(Paths.font("vcr.ttf"), 26, 0xFFFFFFFF, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
         add(debugText);
 
+        if (!Preferences.downscroll) debugText.y += 250;
+
         noteStyleList = NoteStyleRegistry.instance.listEntryIds();
 
         noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
@@ -80,9 +82,6 @@ class MultikeyDebugState extends MusicBeatState
         localConductor.songPosition = 0;
 
         changeKeyCount(0);
-        
-
-        trace("loaded");
     }
 
     function initStrumlines() {
@@ -118,12 +117,26 @@ class MultikeyDebugState extends MusicBeatState
         initMode();
 
 
-        var text = "NoteStyle: " + noteStyle.id;
+        var text = "NoteStyle: " + noteStyle.id + " (CAPSLOCK)";
         text += "\nKey Count: " + Strumline.KEY_COUNT + " (Q/E)";
         text += "\nView Mode: " + modes[curMode] + " (TAB)";
-        text += "\nEdit Mode: " + editModes[curEdit] + " (SPACE)";
+        text += "\nEdit Mode: " + editModes[curEdit] + " (A/D)";
         text += "\n\n" + editModes[curEdit] + " = " + getEditData() + " (Edit with Arrow Keys)";
+        text += "\n(Ctrl+S to save)";
         debugText.text = text;
+    }
+
+    function switchNoteStyle(change) {
+        var curIndex = noteStyleList.indexOf(noteStyle.id);
+        curIndex += change;
+        if (curIndex < 0) curIndex = noteStyleList.length-1;
+        if (curIndex > noteStyleList.length-1) curIndex = 0;
+        changeNoteStyle(curIndex);
+    }
+
+    function changeNoteStyle(index) {
+        noteStyle = NoteStyleRegistry.instance.fetchEntry(noteStyleList[index]);
+        changeKeyCount(0);
     }
 
     function changeKeyCount(change:Int) {
@@ -198,7 +211,7 @@ class MultikeyDebugState extends MusicBeatState
     }
 
     var curEdit:Int = 0;
-    var editModes:Array<String> = ["Scale", "Spacing", "Note X Offsets", "Strumline Offsets", "Hold Note Offsets", "Hold Cover Offsets", "Splash Offsets"];
+    var editModes:Array<String> = ["Scale", "Spacing", "X Offsets", "Strumline Offsets", "Hold Note Offsets", "Hold Cover Offsets", "Splash Offsets"];
     function switchEditMode(change) {
         curEdit += change;
         if (curEdit < 0) curEdit = editModes.length-1;
@@ -282,7 +295,11 @@ class MultikeyDebugState extends MusicBeatState
         if (FlxG.keys.justPressed.Q) changeKeyCount(-1);
         if (FlxG.keys.justPressed.E) changeKeyCount(1);
         if (FlxG.keys.justPressed.TAB) switchMode(1);
-        if (FlxG.keys.justPressed.SPACE) switchEditMode(1);
+        if (FlxG.keys.justPressed.D) switchEditMode(1);
+        if (FlxG.keys.justPressed.A) switchEditMode(-1);
+
+        if (FlxG.keys.justPressed.CAPSLOCK) switchNoteStyle(1);
+
         if (FlxG.keys.justPressed.UP) editVert(-1);
         if (FlxG.keys.justPressed.DOWN) editVert(1);
         if (FlxG.keys.justPressed.LEFT) editHori(-1);

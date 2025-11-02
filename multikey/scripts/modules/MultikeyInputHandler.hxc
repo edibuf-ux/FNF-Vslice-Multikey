@@ -258,12 +258,15 @@ class MultikeyInputHandler extends Module
 		}
 		state.hitbox.trackedInputs = [];
 
-        //if (Multikey.originalControlsScheme == "Four Lanes") {
-			initLaneStyle(state);
-		//} else {
-			//initArrowStyle(state);
-		//}
-
+		if (Strumline.KEY_COUNT == 4) {
+			state.addHitbox(false);
+		} else {
+			//if (Multikey.originalControlsScheme == "Four Lanes") {
+				initLaneStyle(state);
+			//} else {
+				//initArrowStyle(state);
+			//}
+		}
 		initPauseSprites(state);
     }
 

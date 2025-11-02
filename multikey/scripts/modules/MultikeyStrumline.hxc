@@ -76,6 +76,9 @@ class MultikeyStrumline extends Strumline {
 
         var cover:NoteHoldCover = this.constructNoteHoldCover();
 
+        //custom change
+        MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteColors, false); //should fix first frame flicker on hit
+
         if (cover != null)
         {
             cover.holdNote = holdNote;
