@@ -1,5 +1,7 @@
 # FNF Vslice Multikey Addon Mod
 
+![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/gameplay1.jpg)
+
 ## Main Mulitkey Addon:
 - Adds 1-9K support
 - Almost Full Charter support
@@ -13,6 +15,8 @@ Adds an extra multikey difficulty for certain songs:
 - Senpai Pico (6K)
 
 (More songs may be added in the future!)
+
+![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/gameplay2.jpg)
 
 ## Known Issues:
 - Notes flickering in the charter (this usually fixes itself after placing a note)
@@ -55,4 +59,8 @@ Adds an extra multikey difficulty for certain songs:
     - everything else should be self explanatory and can be adjusted with a custom editor
    
 - Offsets for each key count can be fixed with a custom editor that is included the editor list on the main menu
+
+![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/debug1.jpg)
+
+![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/debug2.jpg)
 
