@@ -7,12 +7,14 @@ class MultikeyDifficultySetup extends Module
     {
         super("MultikeyDifficultySetup");
         if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey');
+        if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey-erect')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey-erect');
     }
 
     override public function onStateChangeEnd(event)
     {
         super.onStateChangeEnd(event);
         if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey');
+        if (!Constants.DEFAULT_DIFFICULTY_LIST_FULL.contains('multikey-erect')) Constants.DEFAULT_DIFFICULTY_LIST_FULL.push('multikey-erect');
     }
 
     public function onDestroy(e) {

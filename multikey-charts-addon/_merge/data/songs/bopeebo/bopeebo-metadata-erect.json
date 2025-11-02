@@ -1,4 +1,4 @@
 [
-    { "op": "add", "path": "/playData/difficulties/-", "value": "multikey" },
-    { "op": "add", "path": "/playData/ratings/multikey", "value": 12 }
+    { "op": "add", "path": "/playData/difficulties/-", "value": "multikey-erect" },
+    { "op": "add", "path": "/playData/ratings/multikey-erect", "value": 12 }
 ]
