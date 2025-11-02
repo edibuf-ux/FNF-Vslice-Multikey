@@ -57,7 +57,7 @@ class Multikey extends Module
         ChartEditorState.NOTE_PREVIEW_X_POS = -(keyCount * ChartEditorState.GRID_SIZE) + 480;
         FNFLegacyImporter.STRUMLINE_SIZE = keyCount;
 
-        ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_SET"));
+        //ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_SET"));
     }
 
     var usingMultikey:Bool = false;
@@ -70,7 +70,7 @@ class Multikey extends Module
             {
                 Preferences.controlsScheme = originalControlsScheme;
             }
-            ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_RESET"));
+            //ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_RESET"));
         }
         FlxG.signals.preStateCreate.addOnce(onStateChange);
 		usingMultikey = false;
@@ -168,7 +168,7 @@ class Multikey extends Module
                 if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes"; //stops a crash, will redo later
             }
         }
-        ModuleHandler.callEvent(new ScriptEvent("POST_SETUP_MULTIKEY_STRUMLINES"));
+        //ModuleHandler.callEvent(new ScriptEvent("POST_SETUP_MULTIKEY_STRUMLINES"));
     }
 
     function fixMobileArrows(state, retry = false) {
