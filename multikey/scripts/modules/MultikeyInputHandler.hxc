@@ -25,7 +25,8 @@ class MultikeyInputHandler extends Module
 {
 	public static var platform:HostPlatform;
     public static var onMobile:Bool = false;
-	var loadedControls = null;
+	public static var loadedControls = null;
+	public static var defaultControls = null;
     public function new() {
         super("MultikeyInputHandler");
 		loadedControls = loadCustomControls();
@@ -67,7 +68,7 @@ class MultikeyInputHandler extends Module
 
 	function loadCustomControls() {
 		var controls = null;
-		var defaultControls = loadDefaultControls();
+		defaultControls = loadDefaultControls();
 
 		var save = FlxG.save;
         //save.bind("MultikeyCustomBinds", "FunkinCrew");
@@ -102,7 +103,8 @@ class MultikeyInputHandler extends Module
 
 	var _keyList:Array<Array<Int>> = [];
 	var _buttonList:Array<Array<Int>> = [];
-	var _keysHeld:Array<Bool> = [];
+	private static var _keysHeld:Array<Bool> = [];
+	public static function isHoldingAny() { return MultikeyInputHandler._keysHeld.contains(true); }
 
 	function initControls() {
 		
@@ -426,10 +428,8 @@ class MultikeyInputHandler extends Module
       		PlayState.instance.inputReleaseQueue = [];
 
 			processInputQueue();
-			handleBFAnimHold();
 		}
 	}
-
 
 	function processInputQueue():Void
 	{
@@ -522,14 +522,6 @@ class MultikeyInputHandler extends Module
 		PlayState.instance.playerStrumline.noteVibrations.tryNoteVibration();
   }
 
-  function handleBFAnimHold() {
-	if (!PlayState.instance.isMinimalMode && _keysHeld.contains(true)) {
-		var bf = PlayState.instance.currentStage.getBoyfriend();
-		if (bf != null) {
-			//should be good enough to just keep it held before its supposed to end
-			var targetTime = (bf.singTimeSteps * (Conductor.instance.stepLengthMs / Constants.MS_PER_SEC)) - 0.05;
-			if (bf.holdTimer > targetTime) bf.holdTimer = targetTime;
-		}
-	}
-  }
+  
 }
+

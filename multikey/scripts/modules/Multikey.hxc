@@ -3,7 +3,6 @@ import funkin.Paths;
 import funkin.play.PlayState;
 import flixel.math.FlxMath;
 import funkin.Highscore;
-import funkin.play.character.CharacterType;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.charting.components.ChartEditorNoteSprite;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
@@ -266,87 +265,28 @@ class Multikey extends Module
 
         if (Strumline.KEY_COUNT == 4) 
         {
-            PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.BF;
-            PlayState.instance.currentStage.getDad()?.characterType = CharacterType.DAD;
+            //PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.BF;
+            //PlayState.instance.currentStage.getDad()?.characterType = CharacterType.DAD;
             fixMobileArrows(PlayState.instance);
         } 
         else 
         {
-            PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.OTHER;
-            PlayState.instance.currentStage.getDad()?.characterType = CharacterType.OTHER;
+            //PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.OTHER;
+            //PlayState.instance.currentStage.getDad()?.characterType = CharacterType.OTHER;
             fixMobileArrows(PlayState.instance);
         }
     }
 
-    //sing anim handling, kinda sucks i have to do it like this
-    
+    //do note splashes
     override public function onNoteHit(event)
     {
         super.onNoteHit(event);
 
-        if (event.doesNotesplash) 
+        if (event.doesNotesplash)
         {
             PlayState.instance.playerStrumline.playNoteSplash(event.note.noteData.data % Strumline.KEY_COUNT);
             event.doesNotesplash = false;
         }
-
-        if (event.eventCanceled) return;
-        if (PlayState.instance == null || Strumline.KEY_COUNT == 4 || PlayState.instance.isMinimalMode) return;
-
-        var mustHit = Math.floor(event.note.noteData.data / Strumline.KEY_COUNT) == 0;
-        var singDir = PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [event.note.direction]);
-        var character = mustHit ? PlayState.instance.currentStage.getBoyfriend() : PlayState.instance.currentStage.getDad();
-        character?.playSingAnimation(singDir, false);
-        character?.holdTimer = 0;
-    }
-
-    public override function onNoteMiss(event:NoteScriptEvent)
-    {
-        super.onNoteMiss(event);
-
-        if (event.eventCanceled) return;
-        if (PlayState.instance == null || Strumline.KEY_COUNT == 4 || PlayState.instance.isMinimalMode) return;
-
-        var mustHit = Math.floor(event.note.noteData.data / Strumline.KEY_COUNT) == 0;
-        var singDir = PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [event.note.direction]);
-        var character = mustHit ? PlayState.instance.currentStage.getBoyfriend() : PlayState.instance.currentStage.getDad();
-        character?.playSingAnimation(singDir, true);
-        if (mustHit) 
-        {
-            PlayState.instance.currentStage.getGirlfriend()?.playComboDropAnimation(event.comboCount);
-        }
-    }
-
-    public override function onNoteHoldDrop(event:HoldNoteScriptEvent)
-    {
-        super.onNoteHoldDrop(event);
-
-        if (event.eventCanceled) return;
-        if (PlayState.instance == null || Strumline.KEY_COUNT == 4 || PlayState.instance.isMinimalMode) return;
-
-        var mustHit = Math.floor(event.holdNote.noteData.data / Strumline.KEY_COUNT) == 0;
-        var singDir = PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [event.holdNote.noteDirection]);
-        var character = mustHit ? PlayState.instance.currentStage.getBoyfriend() : PlayState.instance.currentStage.getDad();
-        character?.playSingAnimation(singDir, true);
-        if (mustHit && event.isComboBreak) 
-        {
-            PlayState.instance.currentStage.getGirlfriend()?.playComboDropAnimation(event.comboCount);
-        }
-    }
-
-    public override function onNoteGhostMiss(event:GhostMissNoteScriptEvent):Void
-    {
-        super.onNoteGhostMiss(event);
-
-        if (PlayState.instance == null || Strumline.KEY_COUNT == 4 || PlayState.instance.isMinimalMode) return;
-
-        if (event.eventCanceled || !event.playAnim)
-        {
-            return;
-        }
-
-        var singDir = PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [event.dir]);
-        PlayState.instance.currentStage.getBoyfriend()?.playSingAnimation(singDir, true);
     }
 
     ///////////////////////////
