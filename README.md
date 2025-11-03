@@ -64,3 +64,50 @@ Adds an extra multikey difficulty for certain songs:
 
 ![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/debug2.jpg)
 
+### Extra Characters Example
+
+The mulitkey script overrides the default character anims, both bf and dad have characterType set to OTHER while multikey is active.
+
+So doing something like extra characters needs to be done differently
+
+```haxe
+import MultikeyCharacterHandler;
+
+class YourSong extends Song
+{
+    public function new() {
+		super('yoursong');
+	}
+
+    var extraChar:BaseCharacter;
+    function onCreate(event:ScriptEvent):Void
+    {
+      super.onCreate(event);
+  
+      extraChar = CharacterDataParser.fetchCharacter('pico');
+      PlayState.instance.currentStage.add(extraChar);
+      PlayState.instance.currentStage.characters.set('pico', extraChar);
+    }
+
+    override public function onSongLoaded(event) {
+        super.onSongLoaded(event);
+        MultikeyCharacterHandler.disableDefaultDadAnims = true; //allows you to set up your own anims
+    }
+
+    override public function onNoteHit(event) {
+        super.onNoteHit(event);
+        if (!MultikeyCharacterHandler.getMustHitNote(event.note)) {
+          
+          if (event.note.kind == "extraChar") {
+            extraChar.playSingAnimation(MultikeyCharacterHandler.getNoteSingAnimationDir(event.note), false);
+            extraChar.holdTimer = 0;
+          } else {
+            var dad = PlayState.instance.currentStage.getDad();
+            dad.playSingAnimation(MultikeyCharacterHandler.getNoteSingAnimationDir(event.note), false);
+            dad.holdTimer = 0;
+          }
+        }
+    }
+}
+```
+
