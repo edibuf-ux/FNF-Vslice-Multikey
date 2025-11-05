@@ -29,7 +29,7 @@ class MultikeyInputHandler extends Module
 	public static var defaultControls = null;
     public function new() {
         super("MultikeyInputHandler");
-		loadedControls = loadCustomControls();
+		MultikeyInputHandler.loadedControls = loadCustomControls();
 
 		platform = PlatformUtil.detectHostPlatform();
         onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
@@ -68,32 +68,32 @@ class MultikeyInputHandler extends Module
 
 	function loadCustomControls() {
 		var controls = null;
-		defaultControls = loadDefaultControls();
+		MultikeyInputHandler.defaultControls = loadDefaultControls();
 
 		var save = FlxG.save;
         //save.bind("MultikeyCustomBinds", "FunkinCrew");
-		controls = save.data.binds;
-		if (controls == null) {
+		controls = save.data.multikeyBinds;
+		if (controls == null || controls.keyboard == null || controls.gamepad == null) {
 			trace("No multikey binds found, using default");
-			controls = defaultControls;
-			save.data.binds = controls;
+			controls = MultikeyInputHandler.defaultControls;
+			save.data.multikeyBinds = controls;
 			save.flush();
 		}
 
-		if (controls.keyboard.length < defaultControls.keyboard.length) {
+		if (controls.keyboard.length < MultikeyInputHandler.defaultControls.keyboard.length) {
 			trace("Mismatching multikey keyboard binds, trying to fix");
-			for (i in controls.keyboard.length...defaultControls.keyboard.length) {
-				controls.keyboard[i] = defaultControls.keyboard[i].copy();
+			for (i in controls.keyboard.length...MultikeyInputHandler.defaultControls.keyboard.length) {
+				controls.keyboard[i] = MultikeyInputHandler.defaultControls.keyboard[i].copy();
 			}
-			save.data.binds = controls;
+			save.data.multikeyBinds = controls;
 			save.flush();
 		}
-		if (controls.gamepad.length < defaultControls.gamepad.length) {
+		if (controls.gamepad.length < MultikeyInputHandler.defaultControls.gamepad.length) {
 			trace("Mismatching multikey gamepad binds, trying to fix");
-			for (i in controls.gamepad.length...defaultControls.gamepad.length) {
-				controls.gamepad[i] = defaultControls.gamepad[i].copy();
+			for (i in controls.gamepad.length...MultikeyInputHandler.defaultControls.gamepad.length) {
+				controls.gamepad[i] = MultikeyInputHandler.defaultControls.gamepad[i].copy();
 			}
-			save.data.binds = controls;
+			save.data.multikeyBinds = controls;
 			save.flush();
 		}
 		//save.close();
@@ -108,17 +108,17 @@ class MultikeyInputHandler extends Module
 
 	function initControls() {
 		
-		if (Strumline.KEY_COUNT > loadedControls.keyboard.length) throwMultikeyError("No controls found for key count: " + Strumline.KEY_COUNT + "!");
+		if (Strumline.KEY_COUNT > MultikeyInputHandler.loadedControls.keyboard.length) throwMultikeyError("No controls found for key count: " + Strumline.KEY_COUNT + "!");
 
 		_keysHeld = [];
 		_keyList = [[], []];
 		_buttonList = [[], []];
 		for (i in 0...Strumline.KEY_COUNT) _keysHeld.push(false);
-		for (keys in loadedControls.keyboard[Strumline.KEY_COUNT-1]) {
+		for (keys in MultikeyInputHandler.loadedControls.keyboard[Strumline.KEY_COUNT-1]) {
 			_keyList[0].push(CustomFlxKey.fromString(keys[0]));
 			_keyList[1].push(CustomFlxKey.fromString(keys[1]));
 		}
-		for (buttons in loadedControls.gamepad[Strumline.KEY_COUNT-1]) {
+		for (buttons in MultikeyInputHandler.loadedControls.gamepad[Strumline.KEY_COUNT-1]) {
 			_buttonList[0].push(CustomFlxGamepadInputID.fromString(buttons[0]));
 			_buttonList[1].push(CustomFlxGamepadInputID.fromString(buttons[1]));
 		}

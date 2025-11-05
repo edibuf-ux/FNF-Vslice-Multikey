@@ -1,0 +1,538 @@
+import flixel.FlxG;
+import funkin.modding.module.Module;
+import funkin.ui.options.OptionsState;
+import funkin.modding.base.ScriptedFlxSubState;
+import funkin.graphics.FunkinCamera;
+import funkin.graphics.FunkinSprite;
+import flixel.FlxObject;
+import flixel.FlxSprite;
+import funkin.graphics.shaders.HSVShader;
+import funkin.graphics.shaders.PureColor;
+import funkin.ui.Page;
+import funkin.ui.MenuTypedList;
+import funkin.ui.NavControls;
+import funkin.ui.WrapMode;
+import funkin.ui.TextMenuItem;
+import funkin.ui.AtlasText;
+import funkin.ui.FullScreenScaleMode;
+import funkin.ui.options.ControlsMenu;
+import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.util.Constants;
+import funkin.play.notes.Strumline;
+import funkin.util.InputUtil;
+import funkin.ui.TextMenuList;
+import funkin.ui.Prompt;
+import funkin.ui.ButtonStyle;
+import funkin.PlayerSettings;
+import Std;
+
+import MultikeyInputHandler;
+import CustomFlxKey;
+import CustomFlxGamepadInputID;
+
+class MultikeyOptionsLoader extends Module 
+{
+	public function new()
+    {
+        super("MultikeyOptionsLoader");
+	}
+
+	override function onStateChangeEnd(event)
+    {
+        super.onStateChangeEnd(event);
+        if(Std.isOfType(event.targetState, OptionsState))
+        {
+			var state = event.targetState;
+			var optionsMenu = state.optionsCodex.pages.get("options");
+            var controlsOptionIndex = optionsMenu.items.members.indexOf(optionsMenu.items.byName.get("CONTROLS"));
+            if (controlsOptionIndex == -1) return; //probably on mobile with no keyboard/gamepad connected
+
+			var item = optionsMenu.createItem("MULTIKEY CONTROLS", function() {
+                var substate = ScriptedFlxSubState.init("MultikeyOptionsSubstate");
+                FlxG.state.persistentUpdate = false;
+                FlxG.state.openSubState(substate);
+            });
+
+            optionsMenu.items.remove(item, true);
+            optionsMenu.items.insert(controlsOptionIndex+1, item);
+
+            //reset item y values
+            var i = 0;
+            for (item in optionsMenu.items) {
+                item.y = 100 + i * 100;
+                i++;
+            }
+        }
+    }
+}
+
+//mostly copied from base controls menu
+//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/ui/options/ControlsMenu.hx
+class MultikeyOptionsSubstate extends ScriptedFlxSubState
+{
+    public function new()
+    {
+        super("MultikeyOptionsSubstate");
+    }
+
+    public var controlGroups = [];
+
+    public var camFollow:FlxObject;
+    public var menuCamera:FunkinCamera;
+    public var controlGrid:MenuTypedList;
+    public var labels = [];
+    public var notes = [];
+    public var headers = [];
+    
+    public var keyUsedToEnterPrompt = null;
+    public var buttonUsedToEnterPrompt = null;
+    public var canExit = true;
+    public var prompt:Prompt;
+    public var save:Prompt;
+
+    var deviceList:TextMenuList;
+
+    var currentDevice = "Keys";
+    var currentGamepadID = -1;
+    var deviceListSelected:Bool = false;
+    var actionPrevented:Bool = false;
+
+    var COLUMNS = 2;
+        
+    public function create()
+    {
+        super.create();
+
+        menuCamera = new FunkinCamera("controlsMenu");
+        FlxG.cameras.add(menuCamera, false);
+        menuCamera.bgColor = 0;
+        this.camera = menuCamera;
+
+        var menuBG = new FlxSprite().loadGraphic(Paths.image("menuBG"));
+        var hsv = new HSVShader();
+        hsv.hue = -0.6;
+        hsv.saturation = 0.9;
+        hsv.value = 3.6;
+        menuBG.shader = hsv;
+        menuBG.setGraphicSize(FlxG.width*1.1);
+        menuBG.updateHitbox();
+        menuBG.screenCenter();
+        menuBG.scrollFactor.set(0, 0);
+        add(menuBG);
+
+        var labelShader = new PureColor();
+        labelShader.col = 0xFFFFFFFF;
+        labelShader.colorSet = true;
+
+        controlGrid = new MenuTypedList(NavControls.Columns(2), WrapMode.Vertical);
+        add(controlGrid);
+
+        if (FlxG.gamepads.numActiveGamepads > 0)
+        {
+            var devicesBg:FunkinSprite = new FunkinSprite();
+            devicesBg.makeSolidColor(FlxG.width, 100, 0xFFFAFD6D);
+            add(devicesBg);
+            deviceList = new TextMenuList(NavControls.Horizontal, WrapMode.None);
+            add(deviceList);
+            deviceListSelected = true;
+
+            var item:TextMenuItem;
+
+            item = deviceList.createItem(0, 0, 'Keyboard', "bold", function() {selectDevice("Keys");});
+            item.x = FlxG.width / 2 - item.width - 30;
+            item.y = (devicesBg.height - item.height) / 2;
+
+            item = deviceList.createItem(0, 0, 'Gamepad', "bold", function() {currentGamepadID = FlxG.gamepads.firstActive.id; selectDevice("Gamepad");});
+            item.x = FlxG.width / 2 + 30;
+            item.y = (devicesBg.height - item.height) / 2;
+        }
+        
+
+        //var controls = MultikeyInputHandler.loadedControls;
+        
+        var noteStyle = NoteStyleRegistry.instance.fetchEntry(Constants.DEFAULT_NOTE_STYLE);
+        var maxKeyCount = noteStyle.scriptCall("getMaxKeyCount");
+
+        var spacer = 70;
+        var y = deviceList == null ? 30 : 120;
+        for (i in 0...maxKeyCount) {
+
+            Strumline.KEY_COUNT = i+1;
+            if (Strumline.KEY_COUNT == 4) continue;
+
+            controlGroups.push([]);
+
+            var header = new AtlasText(0, y, Strumline.KEY_COUNT+"K", "default");
+            header.screenCenter(0x01);
+            for (char in header.members) char.shader = labelShader;
+            y += spacer;
+            add(header);
+            headers.push(header);
+
+            for (j in 0...Strumline.KEY_COUNT) {
+
+                controlGroups[getProperControlIndex(i)].push([]);
+
+                var x = Math.max(FullScreenScaleMode.gameNotchSize.x, ControlsMenu.CONTROL_BASE_X);
+                var label = new AtlasText(x + 75, y, noteStyle.scriptCall("getMultikeyNoteDirectionName", [j]), "bold");
+                //for (char in label.members) char.shader = labelShader;
+                add(label);
+                label.alpha = 0.6;
+                labels.push(label);
+
+                var note = new FlxSprite(x, y+10);
+                note.frames = noteStyle.buildNoteFrames();
+                noteStyle.buildNoteAnimations(note);
+                note.animation.play(noteStyle.scriptCall("getMultikeyNoteDirectionName", [j]) + "Scroll");
+                add(note);
+                note.setGraphicSize(70); 
+                note.updateHitbox();
+                note.alpha = 0.6;
+                notes.push(note);
+
+                for (c in 0...COLUMNS) {
+                    var item = createItem(label.x + ControlsMenu.CONTROL_MARGIN_X + c * ControlsMenu.CONTROL_SPACING_X, y, Strumline.KEY_COUNT, j, c);
+                    updateItemText(item, Strumline.KEY_COUNT, j, c);
+                    controlGroups[getProperControlIndex(i)][j][c] = item;
+                }
+
+                y += spacer;
+            }
+        }
+
+
+        camFollow = new FlxObject(FlxG.width / 2, 0, 70, 70);
+        menuCamera.follow(camFollow, null, 0.06);
+        if (deviceList != null)
+        {
+            camFollow.y = deviceList.selectedItem.y;
+            controlGrid.selectedItem.idle();
+            controlGrid.enabled = false;
+        }
+        else
+        camFollow.y = controlGrid.selectedItem.y;
+
+        prompt = new Prompt("\nPress any key to rebind\n\n\nBackspace to unbind\n    Escape to cancel", ButtonStyle.None);
+        prompt.create();
+        prompt.createBgFromMargin(100, 0xFFfafd6d);
+        prompt.back.scrollFactor.set(0, 0);
+        prompt.exists = false;
+        add(prompt);
+
+        popup = new Prompt("\nYou cannot unbind\nthat key!\n\n\nEscape to exit", ButtonStyle.None);
+        popup.create();
+        popup.createBgFromMargin(100, 0xFFfafd6d);
+        popup.back.scrollFactor.set(0, 0);
+        popup.exists = false;
+        add(popup);
+
+        var margin = 100;
+        menuCamera.deadzone.set(0, margin, menuCamera.width, menuCamera.height - margin * 2);
+        menuCamera.minScrollY = 0;
+        controlGrid.onChange.add(function(selected) {
+            camFollow.y = selected.y;
+
+            for (label in labels) label.alpha = 0.6;
+            for (note in notes) note.alpha = 0.6;
+            labels[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 1.0;
+            notes[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 1.0;
+        });
+
+        //TODO: add mobile back button and test
+    }
+
+    function getProperControlIndex(index) { //skip 4k
+        if (index < 3) return index;
+        return index-1;
+    }
+
+    function createItem(x = 0.0, y = 0.0, keyCount:Int, keyIndex:Int, controlIndex:Int)
+    {
+        var kc = keyCount;
+        var ki = keyIndex;
+        var ci = controlIndex;
+        var item = new TextMenuItem(x, y, "test", "default", function() {onSelect(kc, ki, ci);});
+
+        //trace(keyCount + " : " + keyIndex + " : " + controlIndex);
+        //for (i in 0...controlGroups.length)
+        //{
+        //    if (controlGroups[i].contains(control)) itemGroups[i].push(item);
+        //}
+
+        return controlGrid.addItem(item.name, item);
+    }
+
+    function updateItemText(item:TextMenuItem, keyCount:Int, keyIndex:Int, controlIndex:Int)
+    {        
+        var str = "---";
+
+        switch(currentDevice) {
+            case "Keys":
+                var control = CustomFlxKey.fromString(MultikeyInputHandler.loadedControls.keyboard[keyCount-1][keyIndex][controlIndex]);
+                str = control == -1 ? "---" : InputUtil.getKeyName(control);
+            case "Gamepad":
+                var control = CustomFlxGamepadInputID.fromString(MultikeyInputHandler.loadedControls.gamepad[keyCount-1][keyIndex][controlIndex]);
+                str = control == -1 ? "---" : InputUtil.getButtonName(control, FlxG.gamepads.getByID(currentGamepadID));
+        }
+
+        item.label.text = str;
+    }
+    function updateItemTexts() {
+        for (i in 0...controlGroups.length) {
+            var keyCount = i+1;
+            if (keyCount > 3) keyCount++;
+
+            for (j in 0...controlGroups[i].length) {
+                for (c in 0...controlGroups[i][j].length) {
+                    updateItemText(controlGroups[i][j][c], keyCount, j, c);
+                }
+            }
+        }
+    }
+
+    var _currentKeyCount:Int;
+    var _currentKeyIndex:Int;
+    var _currentControlIndex:Int;
+    function onSelect(keyCount:Int, keyIndex:Int, controlIndex:Int):Void
+    {
+        switch (currentDevice)
+        {
+        case "Keys":
+            {
+            keyUsedToEnterPrompt = FlxG.keys.firstJustPressed();
+            }
+        case "Gamepad":
+            {
+            var gamepad = FlxG.gamepads.getByID(currentGamepadID);
+            if (gamepad != null) buttonUsedToEnterPrompt = gamepad.firstJustPressedID();
+            }
+        }
+
+        _currentKeyCount = keyCount;
+        _currentKeyIndex = keyIndex;
+        _currentControlIndex = controlIndex;
+
+        controlGrid.enabled = false;
+        canExit = false;
+        prompt.exists = true;
+    }
+
+    function createPopup():Void
+    {
+        canExit = false;
+        popup.exists = true;
+    }
+
+    function goToDeviceList():Void
+    {
+        controlGrid.selectedItem.idle();
+        labels[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 0.6;
+        notes[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 0.6;
+        controlGrid.enabled = false;
+        deviceList.enabled = true;
+        canExit = true;
+        camFollow.y = deviceList.selectedItem.y;
+        deviceListSelected = true;
+    }
+
+    function selectDevice(device) {
+        currentDevice = device;
+        trace(currentDevice);
+
+        updateItemTexts();
+        //for (item in controlGrid.members)
+            //item.updateDevice(currentDevice);
+
+        
+        var inputName = device == "Keys" ? "key" : "button";
+        var cancel = device == "Keys" ? "Escape" : "Back";
+        // todo: alignment
+        if (device == "Keys")
+        {
+            prompt.setText('\nPress any key to rebind\n\n\n\n    '+cancel+' to cancel');
+            popup.setText('\nYou cannot unbind\nthat key!\n\n\n'+cancel+' to exit');
+        }
+        else
+        {
+            prompt.setText('\nPress any button\n   to rebind\n\n\n '+cancel+' to cancel');
+            popup.setText('\nYou cannot unbind\nthat button!\n\n\n'+cancel+' to exit');
+        }
+
+        controlGrid.selectedItem.select();
+        labels[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 1.0;
+        notes[Std.int(controlGrid.selectedIndex / COLUMNS)].alpha = 1.0;
+        controlGrid.enabled = true;
+        deviceList.enabled = false;
+        deviceListSelected = false;
+        canExit = false;
+    }
+
+    public function update(elapsed)
+    {
+        super.update(elapsed);
+        if (PlayerSettings.player1.controls.BACK && canExit) {
+            close();
+            return;
+        }
+        if (controlGrid.enabled && deviceList != null && deviceListSelected == false && PlayerSettings.player1.controls.BACK) goToDeviceList();
+
+        if (prompt.exists)
+        {
+            switch (currentDevice)
+            {
+                case "Keys":
+                {
+                    // Um?
+                    // Checking pressed causes problems when you change the BACK key,
+                    // but checking released causes problems when the prompt is instant.
+
+                    // keyUsedToEnterPrompt is my weird workaround.
+
+                    var key = FlxG.keys.firstJustReleased();
+                    if (key != CustomFlxKey.NONE && key != keyUsedToEnterPrompt)
+                    {
+                        if (key == CustomFlxKey.ESCAPE)
+                        {
+                            closePrompt();
+                        }
+                        else if (key == CustomFlxKey.BACKSPACE)
+                        {
+                            onInputSelect(CustomFlxKey.NONE);
+                            closePrompt();
+                        }
+                        else
+                        {
+                            onInputSelect(key);
+                            closePrompt();
+                        }
+                    }
+                }
+                case "Gamepad":
+                {
+                    var gamepad = FlxG.gamepads.getByID(currentGamepadID);
+                    var button = gamepad != null ? gamepad.firstJustReleasedID() : CustomFlxGamepadInputID.NONE;
+                    if (button != CustomFlxGamepadInputID.NONE && button != buttonUsedToEnterPrompt)
+                    {
+                        if (button != CustomFlxGamepadInputID.BACK) onInputSelect(button);
+                        closePrompt();
+                    }
+
+                    var key = FlxG.keys.firstJustReleased();
+                    if (key != CustomFlxKey.NONE && key != keyUsedToEnterPrompt)
+                    {
+                        if (key == CustomFlxKey.ESCAPE)
+                        {
+                            closePrompt();
+                        }
+                        else if (key == CustomFlxKey.BACKSPACE)
+                        {
+                            onInputSelect(CustomFlxKey.NONE);
+                            closePrompt();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (actionPrevented && !popup.exists) createPopup();
+
+        if (popup.exists)
+        {
+            switch (currentDevice)
+            {
+                case "Keys":
+                {
+                    var key = FlxG.keys.firstJustReleased();
+                    if (key == CustomFlxKey.ESCAPE) closePopup();
+                }
+                case "Gamepad":
+                {
+                    var gamepad = FlxG.gamepads.getByID(currentGamepadID);
+                    var button = gamepad != null ? gamepad.firstJustReleasedID() : CustomFlxGamepadInputID.NONE;
+                    if (button == CustomFlxGamepadInputID.BACK) closePopup();
+
+                    var key = FlxG.keys.firstJustReleased();
+                    if (key == CustomFlxKey.ESCAPE) closePopup();
+                }
+            }
+        }
+
+        switch (currentDevice)
+        {
+            case "Keys":
+                {
+                    var keyJustReleased:Int = FlxG.keys.firstJustReleased();
+                    if (keyJustReleased != CustomFlxKey.NONE && keyJustReleased == keyUsedToEnterPrompt)
+                    {
+                        keyUsedToEnterPrompt = null;
+                    }
+                    buttonUsedToEnterPrompt = null;
+                }
+            case "Gamepad":
+                {
+                    var gamepad = FlxG.gamepads.getByID(currentGamepadID);
+                    var buttonJustReleased = gamepad != null ? gamepad.firstJustReleasedID() : CustomFlxGamepadInputID.NONE;
+                    if (buttonJustReleased != CustomFlxGamepadInputID.NONE && buttonJustReleased == buttonUsedToEnterPrompt)
+                    {
+                        buttonUsedToEnterPrompt = null;
+                    }
+                    keyUsedToEnterPrompt = null;
+                }
+        }
+    }
+
+    function onInputSelect(input:Int)
+    {
+        var item = controlGrid.selectedItem;
+        var inputStr = "";
+        var otherIndex = _currentControlIndex == 0 ? 1 : 0;
+        var otherInputStr = "";
+        switch(currentDevice)
+        {
+            case "Keys":
+                inputStr = CustomFlxKey.toString(input);
+                otherInputStr = MultikeyInputHandler.loadedControls.keyboard[_currentKeyCount-1][_currentKeyIndex][otherIndex];
+            case "Gamepad":
+                inputStr = CustomFlxGamepadInputID.toString(input);
+                otherInputStr = MultikeyInputHandler.loadedControls.gamepad[_currentKeyCount-1][_currentKeyIndex][otherIndex];
+        }
+        
+        //var otherInput = currentDevice == "Keys" ? CustomFlxKey.fromString(otherInputStr) : CustomFlxGamepadInputID.fromString(otherInputStr);
+        if (inputStr == otherInputStr) return; //input is already bound
+
+        switch(currentDevice)
+        {
+            case "Keys":
+                MultikeyInputHandler.loadedControls.keyboard[_currentKeyCount-1][_currentKeyIndex][_currentControlIndex] = inputStr;
+            case "Gamepad":
+                MultikeyInputHandler.loadedControls.gamepad[_currentKeyCount-1][_currentKeyIndex][_currentControlIndex] = inputStr;
+        }
+        updateItemText(item, _currentKeyCount, _currentKeyIndex, _currentControlIndex);
+
+        var save = FlxG.save;
+        save.data.multikeyBinds = MultikeyInputHandler.loadedControls;
+		save.flush();
+    }
+
+    function closePrompt()
+    {
+        prompt.exists = false;
+        controlGrid.enabled = true;
+        if (deviceList == null) canExit = true;
+    }
+
+    function closePopup()
+    {
+        popup.exists = false;
+        actionPrevented = false;
+        if (deviceList == null) canExit = true;
+    }
+
+    public function destroy()
+    {
+       super.destroy();
+       if (FlxG.cameras.list.indexOf(this.menuCamera) != -1) {
+         FlxG.cameras.remove(this.menuCamera);
+       }
+    }
+}
