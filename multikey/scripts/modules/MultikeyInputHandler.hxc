@@ -16,9 +16,9 @@ import funkin.PlayerSettings;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
 import haxe.Json;
+import funkin.modding.ModStore;
 
 import Multikey;
-import MultikeyInputStatus;
 import CustomFlxKey; // as FlxKey;
 import CustomFlxGamepadInputID;
 
@@ -104,15 +104,20 @@ class MultikeyInputHandler extends Module
 
 	var _keyList:Array<Array<Int>> = [];
 	var _buttonList:Array<Array<Int>> = [];
+	var _inputStatus = { //will be stored as reference into the mod store, static variables are being weird so using modstore instead
+		keysHeld: []
+	};
 
 	function initControls() {
 		
 		if (Strumline.KEY_COUNT > MultikeyInputHandler.loadedControls.keyboard.length) throwMultikeyError("No controls found for key count: " + Strumline.KEY_COUNT + "!");
 
-		MultikeyInputStatus.reset();
+		ModStore.register("MultikeyInputStatus", _inputStatus);
 
+		_inputStatus.keysHeld = [];
 		_keyList = [[], []];
 		_buttonList = [[], []];
+		for (i in 0...Strumline.KEY_COUNT) _inputStatus.keysHeld.push(false);
 		for (keys in MultikeyInputHandler.loadedControls.keyboard[Strumline.KEY_COUNT-1]) {
 			_keyList[0].push(CustomFlxKey.fromString(keys[0]));
 			_keyList[1].push(CustomFlxKey.fromString(keys[1]));
@@ -145,26 +150,26 @@ class MultikeyInputHandler extends Module
 	function inputDown(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
 		
-		if (!MultikeyInputStatus.isHolding(index)) {
+		if (!_inputStatus.keysHeld[index]) {
 			if (PlayState.instance.isGamePaused) return;
 			inputPressQueue.push({
 				noteDirection: index,
 				timestamp: timestamp
 			});
 		}
-		MultikeyInputStatus.setHolding(index, true);
+		_inputStatus.keysHeld[index] = true;
 	}
 	function inputUp(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
 
-		if (MultikeyInputStatus.isHolding(index)) {
+		if (_inputStatus.keysHeld[index]) {
 			if (PlayState.instance.isGamePaused) return;
 			inputReleaseQueue.push({
 				noteDirection: index,
 				timestamp: timestamp
 			});
 		}
-		MultikeyInputStatus.setHolding(index, false);
+		_inputStatus.keysHeld[index] = false;
 	}
 
 	//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/input/PreciseInputManager.hx#L289
