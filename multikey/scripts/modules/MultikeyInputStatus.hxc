@@ -1,0 +1,16 @@
+import funkin.play.notes.Strumline;
+
+//doing this because im seeing some weird stuff with static variables not updating in all modules
+class MultikeyInputStatus {
+    public static var heldInputs = [];
+
+    public static function isHoldingAny() { return MultikeyInputStatus.heldInputs.contains(true); }
+
+    public static function reset() {
+        MultikeyInputStatus.heldInputs = [];
+        for (i in 0...Strumline.KEY_COUNT) MultikeyInputStatus.heldInputs.push(false);
+    }
+
+    public static function isHolding(_index:Int) { return MultikeyInputStatus.heldInputs[_index]; }
+    public static function setHolding(_index:Int, _hold:Bool) { MultikeyInputStatus.heldInputs[_index] = _hold; }
+}

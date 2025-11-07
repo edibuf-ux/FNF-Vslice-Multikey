@@ -18,6 +18,7 @@ import funkin.util.HostPlatform;
 import haxe.Json;
 
 import Multikey;
+import MultikeyInputStatus;
 import CustomFlxKey; // as FlxKey;
 import CustomFlxGamepadInputID;
 
@@ -103,17 +104,15 @@ class MultikeyInputHandler extends Module
 
 	var _keyList:Array<Array<Int>> = [];
 	var _buttonList:Array<Array<Int>> = [];
-	private static var _keysHeld:Array<Bool> = [];
-	public static function isHoldingAny() { return MultikeyInputHandler._keysHeld.contains(true); }
 
 	function initControls() {
 		
 		if (Strumline.KEY_COUNT > MultikeyInputHandler.loadedControls.keyboard.length) throwMultikeyError("No controls found for key count: " + Strumline.KEY_COUNT + "!");
 
-		_keysHeld = [];
+		MultikeyInputStatus.reset();
+
 		_keyList = [[], []];
 		_buttonList = [[], []];
-		for (i in 0...Strumline.KEY_COUNT) _keysHeld.push(false);
 		for (keys in MultikeyInputHandler.loadedControls.keyboard[Strumline.KEY_COUNT-1]) {
 			_keyList[0].push(CustomFlxKey.fromString(keys[0]));
 			_keyList[1].push(CustomFlxKey.fromString(keys[1]));
@@ -146,26 +145,26 @@ class MultikeyInputHandler extends Module
 	function inputDown(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
 		
-		if (!_keysHeld[index]) {
+		if (!MultikeyInputStatus.isHolding(index)) {
 			if (PlayState.instance.isGamePaused) return;
 			inputPressQueue.push({
 				noteDirection: index,
 				timestamp: timestamp
 			});
 		}
-		_keysHeld[index] = true;
+		MultikeyInputStatus.setHolding(index, true);
 	}
 	function inputUp(index:Int, timestamp:Int64) {
 		if (index == -1 || PlayState.instance == null || Strumline.KEY_COUNT == 4) return;
 
-		if (_keysHeld[index]) {
+		if (MultikeyInputStatus.isHolding(index)) {
 			if (PlayState.instance.isGamePaused) return;
 			inputReleaseQueue.push({
 				noteDirection: index,
 				timestamp: timestamp
 			});
 		}
-		_keysHeld[index] = false;
+		MultikeyInputStatus.setHolding(index, false);
 	}
 
 	//https://github.com/FunkinCrew/Funkin/blob/main/source/funkin/input/PreciseInputManager.hx#L289

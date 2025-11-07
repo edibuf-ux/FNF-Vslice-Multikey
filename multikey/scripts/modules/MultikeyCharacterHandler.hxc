@@ -8,7 +8,7 @@ import funkin.Conductor;
 import Std;
 import Math;
 
-import MultikeyInputHandler;
+import MultikeyInputStatus;
 
 class MultikeyCharacterHandler extends Module
 {
@@ -118,7 +118,7 @@ class MultikeyCharacterHandler extends Module
 
 
     function handleBFAnimHold() {
-        if (!PlayState.instance.isMinimalMode && MultikeyInputHandler.isHoldingAny() && !MultikeyCharacterHandler.disableDefaultBFAnims) {
+        if (!PlayState.instance.isMinimalMode && MultikeyInputStatus.isHoldingAny() && !MultikeyCharacterHandler.disableDefaultBFAnims) {
             var bf = PlayState.instance.currentStage.getBoyfriend();
             if (bf != null) {
                 //should be good enough to just keep it held before its supposed to end
