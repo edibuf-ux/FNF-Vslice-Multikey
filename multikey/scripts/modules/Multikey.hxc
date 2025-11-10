@@ -165,7 +165,7 @@ class Multikey extends Module
     }
 
     function fixMobileArrows(state, retry = false) {
-        //if (!onMobile) return;
+        if (!onMobile) return;
 
         var playerStrumline = state.playerStrumline;
         var opponentStrumline = state.opponentStrumline;
