@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<collapsible-dialog id="toolboxKeycounts" title="Song Key Counts" width="250" height="150">
+    <vbox>
+        <label id="labelKeycount" text="Key Count" verticalAlign="center" />
+        <number-stepper id="inputKeycount" pos="0" step="1" min="1" max="9" tooltip="" />
+        <hbox>
+            <button allowFocus="false" id="keycountsToolboxSave" text="Save Key Counts File" />
+        </hbox>
+    </vbox>
+</collapsible-dialog>

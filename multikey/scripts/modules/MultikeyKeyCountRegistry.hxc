@@ -66,13 +66,27 @@ class MultikeyKeyCountRegistry extends Module
     }
 
     public static function fetchEntry(song:String, variation:String, difficulty:String) {
-        var entryID = song+":"+variation;
+        var entryID:String = song+":"+variation;
         if (!hasEntry(song, variation, difficulty)) return 4;
         return entries.get(entryID).keyCounts.get(difficulty);
     }
     public static function hasEntry(song:String, variation:String, difficulty:String) {
-        var entryID = song+":"+variation;
+        var entryI:String = song+":"+variation;
         if (entries.exists(entryID)) return entries.get(entryID).keyCounts.exists(difficulty);
         return false;
+    }
+
+    public static function setEntry(song:String, variation:String, difficulty:String, kc:Int) {
+        var entryID:String = song+":"+variation;
+        var entry:MultikeyKeyCounts = entries.get(entryID);
+        if (entry == null) {
+            entry = {keyCounts: [difficulty => kc]};
+            entries.set(entryID, entry);
+        }
+        entry.keyCounts.set(difficulty, kc);
+    }
+    public static function fetchEntryRaw(song:String, variation:String) {
+        var entryID:String = song+":"+variation;
+        return entries.get(entryID);
     }
 }

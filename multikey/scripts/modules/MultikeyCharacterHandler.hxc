@@ -19,8 +19,10 @@ class MultikeyCharacterHandler extends Module
     public static var disableDefaultBFAnims = false;
 
     override public function onSongLoaded(event) {
-        PlayState.instance.currentStage.getBoyfriend()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.BF : CharacterType.OTHER;
-        PlayState.instance.currentStage.getDad()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.DAD : CharacterType.OTHER;
+        if (!PlayState.instance.isMinimalMode) {
+            PlayState.instance.currentStage.getBoyfriend()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.BF : CharacterType.OTHER;
+            PlayState.instance.currentStage.getDad()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.DAD : CharacterType.OTHER;
+        }
         super.onSongLoaded(event);
     }
 

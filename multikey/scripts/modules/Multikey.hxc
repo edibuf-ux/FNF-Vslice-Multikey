@@ -17,6 +17,7 @@ import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
 import funkin.util.FileUtil;
 import funkin.util.Constants;
+import funkin.util.SerializerUtil;
 import funkin.ui.FullScreenScaleMode;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
@@ -84,6 +85,7 @@ class Multikey extends Module
         if (Std.isOfType(e.targetState, ChartEditorState)) 
         {
             charterPostCreate(e.targetState);
+            initKeyCountToolbox(e.targetState);
         }
 	}
 
@@ -167,7 +169,7 @@ class Multikey extends Module
     }
 
     function fixMobileArrows(state, retry = false) {
-        //if (!onMobile) return;
+        if (!onMobile) return;
 
         var isArrows = Strumline.KEY_COUNT == 4 ? ModStore.get("MultikeyTempOriginalControlScheme") == "Arrows" : FlxG.save.data.multikeyControlScheme == MultikeyMobileControlScheme.ARROWS;
 
@@ -285,25 +287,10 @@ class Multikey extends Module
                     opponentNoteData.push(songNote);
             }
         }
+
         PlayState.instance.playerStrumline.applyNoteData(playerNoteData);
         PlayState.instance.opponentStrumline.applyNoteData(opponentNoteData);
-
-        if (PlayState.instance.currentStage == null) return;
-        if (PlayState.instance.currentStage.getBoyfriend() == null) return;
-        if (PlayState.instance.currentStage.getDad() == null) return;
-
-        if (Strumline.KEY_COUNT == 4) 
-        {
-            //PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.BF;
-            //PlayState.instance.currentStage.getDad()?.characterType = CharacterType.DAD;
-            fixMobileArrows(PlayState.instance);
-        } 
-        else 
-        {
-            //PlayState.instance.currentStage.getBoyfriend()?.characterType = CharacterType.OTHER;
-            //PlayState.instance.currentStage.getDad()?.characterType = CharacterType.OTHER;
-            fixMobileArrows(PlayState.instance);
-        }
+        fixMobileArrows(PlayState.instance);
     }
 
     //do note splashes
@@ -366,9 +353,6 @@ class Multikey extends Module
         _lastSongID = state.currentSongId;
         _lastVariation = state.selectedVariation;
         _lastDifficulty = state.selectedDifficulty;
-        trace(_lastSongID);
-        trace(_lastVariation);
-        trace(_lastDifficulty);
     }
 
     var charterVisibleHoldNoteSpriteData = [];
@@ -458,20 +442,80 @@ class Multikey extends Module
         var state = FlxG.state;
         if (_lastSongID != state.currentSongId || _lastVariation != state.selectedVariation || _lastDifficulty != state.selectedDifficulty) {
             
-            
             var oldKeyCount = Strumline.KEY_COUNT;
             var newKeyCount = MultikeyKeyCountRegistry.fetchEntry(state.currentSongId, state.selectedVariation, state.selectedDifficulty);
 
             if (newKeyCount != oldKeyCount) {
-                setKeyCount(newKeyCount);
-                
-                charterPostCreate(state);
-                charterVisibleHoldNoteSpriteData = [];
+                setCharterKeyCount(newKeyCount);
+                refreshKeyCountToolbox();
+            }
+            keycountToolboxLabelKeycount.text = "Key Count for " + FunkinStringTools.toTitleCase(state.selectedDifficulty) + (state.selectedVariation != Constants.DEFAULT_VARIATION ? " ("+FunkinStringTools.toTitleCase(state.selectedVariation)+")" : "");
+            _lastSongID = state.currentSongId;
+            _lastVariation = state.selectedVariation;
+            _lastDifficulty = state.selectedDifficulty;
+        }
+    }
+    function setCharterKeyCount(k:Int) {
+        var state = FlxG.state;
+        setKeyCount(k);
+        charterPostCreate(state);
+        charterVisibleHoldNoteSpriteData = [];
+        
+        //force note positions to update
+        state.scrollPositionInPixels = state.scrollPositionInPixels+1;
+        state.scrollPositionInPixels = state.scrollPositionInPixels-1;
+    }
 
-                //force note positions to update
-                state.scrollPositionInPixels = state.scrollPositionInPixels+1;
-                state.scrollPositionInPixels = state.scrollPositionInPixels-1;
+    var CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT:String = null;
+    var keycountToolbox = null;
+    var keycountToolboxInputKeycount = null;
+    var keycountToolboxSave = null;
+    var keycountToolboxLabelKeycount = null;
+
+    var keycountMenuButton = null;
+    function initKeyCountToolbox(state) {
+        CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT = Paths.ui('chart-editor/toolbox/keycounts');
+
+        //setup toolbox
+        keycountToolbox = RuntimeComponentBuilder.fromString(Assets.getText(CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT), "xml");
+        keycountToolbox.destroyOnClose = false;
+        state.activeToolboxes.set(CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT, keycountToolbox);
+
+        keycountToolboxLabelKeycount = keycountToolbox.findComponent("labelKeycount");
+        keycountToolboxInputKeycount = keycountToolbox.findComponent("inputKeycount");
+        keycountToolboxInputKeycount.onChange = function(event) {
+            trace(keycountToolboxInputKeycount.value);
+            if (keycountToolboxInputKeycount.value != Strumline.KEY_COUNT) {
+                setCharterKeyCount(keycountToolboxInputKeycount.value);
+                MultikeyKeyCountRegistry.setEntry(_lastSongID, _lastVariation, _lastDifficulty, Strumline.KEY_COUNT);
+            }
+        };
+        refreshKeyCountToolbox();
+
+        keycountToolboxSave = keycountToolbox.findComponent("keycountsToolboxSave");
+        keycountToolboxSave.onClick = function(_) {
+            var suffix:String = _lastVariation != Constants.DEFAULT_VARIATION ? "-" + _lastVariation : "";
+            FileUtil.writeFileReference("keyCounts"+suffix+".json", SerializerUtil.toJSON(MultikeyKeyCountRegistry.fetchEntryRaw(_lastSongID, _lastVariation)), function(n) {});
+        }
+
+
+        //add keycount button into the window menu
+        keycountMenuButton = RuntimeComponentBuilder.fromString(Assets.getText(Paths.ui('chart-editor/components/keycounts-menubar')), "xml");
+        keycountMenuButton.onChange = function(event) {
+            //trace(event.value); //doesnt cast correctly into a bool with hscript i guess?
+            ChartEditorToolboxHandler.setToolboxState(FlxG.state, CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT, keycountMenuButton.selected);
+            refreshKeyCountToolbox();
+        }
+
+        for (menu in state.menubar._compositeBuilder._menus) {
+            if (menu.text == "Window") {
+                menu.addComponent(keycountMenuButton);
             }
         }
+    }
+
+    function refreshKeyCountToolbox() {
+        keycountToolboxInputKeycount.value = Strumline.KEY_COUNT;
+        keycountToolboxLabelKeycount.text = "Key Count for " + FlxG.state.playbarDifficulty.text;
     }
 }
