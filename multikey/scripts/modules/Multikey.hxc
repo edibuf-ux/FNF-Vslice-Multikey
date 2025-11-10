@@ -21,10 +21,12 @@ import funkin.util.tools.StringTools as FunkinStringTools;
 import flixel.addons.display.FlxTiledSprite;
 import haxe.Timer;
 import haxe.Json;
+import flixel.tweens.FlxTween;
 import funkin.Preferences;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
 import funkin.ui.FullScreenScaleMode;
+import funkin.modding.ModStore;
 
 import MultikeyKeyCountRegistry;
 import MultikeySustainFixer;
@@ -40,7 +42,7 @@ class Multikey extends Module
         platform = PlatformUtil.detectHostPlatform();
         onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
 
-        if (onMobile) Preferences.downscroll = true;
+        //if (onMobile) Preferences.downscroll = true;
     }
 
     public function setKeyCount(keyCount:Int) 
@@ -55,8 +57,6 @@ class Multikey extends Module
         ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = keyCount * 2 + 1;
         ChartEditorState.NOTE_PREVIEW_X_POS = -(keyCount * ChartEditorState.GRID_SIZE) + 480;
         FNFLegacyImporter.STRUMLINE_SIZE = keyCount;
-
-        //ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_SET"));
     }
 
     var usingMultikey:Bool = false;
@@ -67,9 +67,8 @@ class Multikey extends Module
             setKeyCount(4);
             if (onMobile) 
             {
-                Preferences.controlsScheme = originalControlsScheme;
+                Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
             }
-            //ModuleHandler.callEvent(new ScriptEvent("KEY_COUNT_RESET"));
         }
         FlxG.signals.preStateCreate.addOnce(onStateChange);
 		usingMultikey = false;
@@ -125,8 +124,6 @@ class Multikey extends Module
             setupMultikeyStrumlines(PlayState.instance, true);
             
         }
-        //fixMobileArrows(PlayState.instance, true);
-        //trace(PlayState.instance.playerStrumline);
         _regenNoteData = true;
     }
 
@@ -140,8 +137,6 @@ class Multikey extends Module
 
         return MultikeyKeyCountRegistry.fetchEntry(state.currentSong.id, state.currentVariation, state.currentDifficulty);
     }
-
-    public static var originalControlsScheme = "Arrows";
 
     public function setupMultikeyStrumlines(state, retry = false) 
     {
@@ -163,19 +158,17 @@ class Multikey extends Module
         {
             if (onMobile)
             {
-                originalControlsScheme = Preferences.controlsScheme;
-                if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes"; //stops a crash, will redo later
+                ModStore.register("MultikeyTempOriginalControlScheme", Preferences.controlsScheme);
+                if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes"; //stops it from crashing
             }
         }
-        //ModuleHandler.callEvent(new ScriptEvent("POST_SETUP_MULTIKEY_STRUMLINES"));
     }
 
     function fixMobileArrows(state, retry = false) {
-        if (!onMobile) return;
+        //if (!onMobile) return;
 
         var playerStrumline = state.playerStrumline;
         var opponentStrumline = state.opponentStrumline;
-
         final cutoutSize = FullScreenScaleMode.gameCutoutSize.x / 2.5;
         
         playerStrumline.x = (FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET) + (cutoutSize / 2.0);
@@ -210,6 +203,22 @@ class Multikey extends Module
         }
         opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
         opponentStrumline.x -= 30;
+
+        var needsFade = playerStrumline.strumlineNotes.members[0].alpha == 0.0;
+        if (needsFade) {
+            //refade so that its at the correct y level
+            for (i in 0...playerStrumline.strumlineNotes.members.length) {
+                //playerStrumline.strumlineNotes.members[i].y += 10;
+                FlxTween.cancelTweensOf(playerStrumline.strumlineNotes.members[i]);
+            }
+            for (i in 0...opponentStrumline.strumlineNotes.members.length) {
+                //opponentStrumline.strumlineNotes.members[i].y += 10;
+                FlxTween.cancelTweensOf(opponentStrumline.strumlineNotes.members[i]);
+            }
+            playerStrumline.fadeInArrows();
+            opponentStrumline.fadeInArrows();
+        }
+
     }
 
     var _regenNoteData = false;

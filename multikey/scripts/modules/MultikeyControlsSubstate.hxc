@@ -24,8 +24,11 @@ import funkin.ui.TextMenuList;
 import funkin.ui.Prompt;
 import funkin.ui.ButtonStyle;
 import funkin.PlayerSettings;
+import funkin.util.PlatformUtil;
+import funkin.util.HostPlatform;
 import Std;
 
+import MultikeyMobileControlScheme;
 import MultikeyInputHandler;
 import CustomFlxKey;
 import CustomFlxGamepadInputID;
@@ -35,6 +38,8 @@ class MultikeyOptionsLoader extends Module
 	public function new()
     {
         super("MultikeyOptionsLoader");
+
+        if (FlxG.save.data.multikeyControlScheme == null) FlxG.save.data.multikeyControlScheme = 0;
 	}
 
 	override function onStateChangeEnd(event)
@@ -43,6 +48,25 @@ class MultikeyOptionsLoader extends Module
         if(Std.isOfType(event.targetState, OptionsState))
         {
 			var state = event.targetState;
+
+            var platform = PlatformUtil.detectHostPlatform();
+            var onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
+
+            var prefMenu = state.optionsCodex.pages.get("preferences");
+            if (prefMenu != null && onMobile) {
+                prefMenu.createPrefItemEnum('Multikey Scheme', 'Mobile input control scheme used with non 4K charts.', [
+                    "Arrows" => MultikeyMobileControlScheme.ARROWS,
+                    "Lanes" => MultikeyMobileControlScheme.LANES
+                    ], function(key:String, value:Int):Void {
+                        FlxG.save.data.multikeyControlScheme = value;
+                    }, switch (FlxG.save.data.multikeyControlScheme)
+                    {
+                        case 0: "Arrows";
+                        case 1: "Lanes";
+                        default: "";
+                });
+            }
+
 			var optionsMenu = state.optionsCodex.pages.get("options");
             var controlsOptionIndex = optionsMenu.items.members.indexOf(optionsMenu.items.byName.get("CONTROLS"));
             if (controlsOptionIndex == -1) return; //probably on mobile with no keyboard/gamepad connected

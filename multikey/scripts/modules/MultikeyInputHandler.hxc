@@ -17,10 +17,17 @@ import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
 import haxe.Json;
 import funkin.modding.ModStore;
+import funkin.Preferences;
 
 import Multikey;
 import CustomFlxKey; // as FlxKey;
 import CustomFlxGamepadInputID;
+
+class MultikeyMobileControlScheme
+{
+	public static var ARROWS:String = 0;
+	public static var LANES:String = 1;
+}
 
 class MultikeyInputHandler extends Module
 {
@@ -264,14 +271,27 @@ class MultikeyInputHandler extends Module
 		}
 		state.hitbox.trackedInputs = [];
 
+		var isArrows = false;
 		if (Strumline.KEY_COUNT == 4) {
+			Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
+			isArrows = Preferences.controlsScheme == "Arrows";
 			state.addHitbox(false);
 		} else {
-			//if (Multikey.originalControlsScheme == "Four Lanes") {
-				initLaneStyle(state);
-			//} else {
-				//initArrowStyle(state);
-			//}
+			switch(FlxG.save.data.multikeyControlScheme)
+			{
+				case MultikeyMobileControlScheme.LANES:
+					initLaneStyle(state);
+				case MultikeyMobileControlScheme.ARROWS:
+					isArrows = true;
+					initArrowStyle(state);
+			}
+		}
+		if (isArrows) {
+			state.hitbox.isPixel = state.currentChart.noteStyle == "pixel";
+			for (direction in Strumline.DIRECTIONS)
+			{
+				state.hitbox.getFirstHintByDirection(direction).follow(state.playerStrumline.getByDirection(direction));
+			}
 		}
 		initPauseSprites(state);
     }
