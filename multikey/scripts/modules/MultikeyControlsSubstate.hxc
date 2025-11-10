@@ -1,11 +1,14 @@
 import flixel.FlxG;
-import funkin.modding.module.Module;
-import funkin.ui.options.OptionsState;
-import funkin.modding.base.ScriptedFlxSubState;
-import funkin.graphics.FunkinCamera;
-import funkin.graphics.FunkinSprite;
 import flixel.FlxObject;
 import flixel.FlxSprite;
+
+import funkin.PlayerSettings;
+import funkin.data.notestyle.NoteStyleRegistry;
+import funkin.modding.base.ScriptedFlxSubState;
+import funkin.modding.module.Module;
+import funkin.play.notes.Strumline;
+import funkin.graphics.FunkinCamera;
+import funkin.graphics.FunkinSprite;
 import funkin.graphics.shaders.HSVShader;
 import funkin.graphics.shaders.PureColor;
 import funkin.ui.Page;
@@ -15,17 +18,16 @@ import funkin.ui.WrapMode;
 import funkin.ui.TextMenuItem;
 import funkin.ui.AtlasText;
 import funkin.ui.FullScreenScaleMode;
-import funkin.ui.options.ControlsMenu;
-import funkin.data.notestyle.NoteStyleRegistry;
-import funkin.util.Constants;
-import funkin.play.notes.Strumline;
-import funkin.util.InputUtil;
 import funkin.ui.TextMenuList;
 import funkin.ui.Prompt;
 import funkin.ui.ButtonStyle;
-import funkin.PlayerSettings;
+import funkin.ui.options.ControlsMenu;
+import funkin.ui.options.OptionsState;
+import funkin.util.Constants;
+import funkin.util.InputUtil;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
+
 import Std;
 
 import MultikeyMobileControlScheme;

@@ -1,7 +1,7 @@
+import flixel.math.FlxMath;
+import funkin.play.notes.Strumline;
 import funkin.play.notes.SustainTrail;
 import funkin.ui.debug.charting.ChartEditorState;
-import funkin.play.notes.Strumline;
-import flixel.math.FlxMath;
 
 class MultikeySustainFixer {
     public static function fixSustain(sustain, noteStyle, maxColors, inCharter = false) {

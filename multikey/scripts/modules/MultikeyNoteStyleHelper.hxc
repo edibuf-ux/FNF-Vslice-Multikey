@@ -1,8 +1,6 @@
-import flixel.FlxG;
 import funkin.Paths;
 import funkin.modding.module.Module;
 import haxe.Json;
-import funkin.util.SerializerUtil;
 
 typedef MultikeyNoteStyleKeyCountData =
 {

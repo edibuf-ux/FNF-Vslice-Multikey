@@ -1,33 +1,33 @@
 import flixel.FlxG;
+import flixel.tweens.FlxTween;
+
 import funkin.Paths;
-import funkin.play.PlayState;
-import flixel.math.FlxMath;
+import funkin.Preferences;
 import funkin.Highscore;
-import funkin.ui.debug.charting.ChartEditorState;
-import funkin.ui.debug.charting.components.ChartEditorNoteSprite;
-import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
-import funkin.ui.debug.charting.components.ChartEditorNotePreview;
 import funkin.data.notestyle.NoteStyleRegistry;
-import funkin.modding.events.ScriptEvent;
-import funkin.modding.module.ModuleHandler;
+import funkin.data.song.importer.FNFLegacyImporter;
+import funkin.mobile.input.ControlsHandler;
+import funkin.modding.ModStore;
 import funkin.modding.module.Module;
+import funkin.play.PlayState;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.ScriptedStrumline;
-import funkin.data.song.importer.FNFLegacyImporter;
-import funkin.util.Constants;
 import funkin.play.song.Song;
-import StringTools;
-import funkin.util.tools.StringTools as FunkinStringTools;
-import flixel.addons.display.FlxTiledSprite;
-import haxe.Timer;
-import haxe.Json;
-import flixel.tweens.FlxTween;
-import funkin.Preferences;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
+import funkin.util.FileUtil;
+import funkin.util.Constants;
 import funkin.ui.FullScreenScaleMode;
-import funkin.modding.ModStore;
-import funkin.mobile.input.ControlsHandler;
+import funkin.ui.debug.charting.ChartEditorState;
+import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
+import funkin.ui.debug.charting.handlers.ChartEditorToolboxHandler;
+
+import haxe.Timer;
+import haxe.Json;
+import haxe.ui.RuntimeComponentBuilder;
+
+import funkin.util.tools.StringTools as FunkinStringTools;
+import StringTools;
 
 import MultikeyMobileControlScheme;
 import MultikeyKeyCountRegistry;

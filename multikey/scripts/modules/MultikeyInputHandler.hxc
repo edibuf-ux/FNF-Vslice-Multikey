@@ -1,23 +1,23 @@
-import funkin.input.PreciseInputManager;
-import funkin.modding.module.Module;
-import funkin.play.PlayState;
-import funkin.graphics.FunkinSprite;
-import funkin.Conductor;
-import funkin.play.notes.Strumline;
-import funkin.util.Constants;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import funkin.util.ReflectUtil;
-import funkin.util.FlxGamepadUtil;
+
+import funkin.PlayerSettings;
+import funkin.Preferences;
+import funkin.graphics.FunkinSprite;
+import funkin.input.PreciseInputManager;
 import funkin.mobile.ui.FunkinHint;
 import funkin.mobile.ui.FunkinHintAlphaStyle;
 import funkin.mobile.input.ControlsHandler;
-import funkin.PlayerSettings;
+import funkin.modding.module.Module;
+import funkin.modding.ModStore;
+import funkin.play.PlayState;
+import funkin.play.notes.Strumline;
+import funkin.util.Constants;
+import funkin.util.FlxGamepadUtil;
 import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
+
 import haxe.Json;
-import funkin.modding.ModStore;
-import funkin.Preferences;
 
 import Multikey;
 import CustomFlxKey; // as FlxKey;

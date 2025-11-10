@@ -1,11 +1,10 @@
-import funkin.modding.module.Module;
-import funkin.play.character.CharacterType;
-import funkin.play.PlayState;
-import funkin.play.notes.Strumline;
-import funkin.play.notes.SustainTrail;
-import funkin.util.Constants;
 import funkin.Conductor;
 import funkin.modding.ModStore;
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import funkin.play.character.CharacterType;
+import funkin.play.notes.Strumline;
+import funkin.util.Constants;
 import Std;
 import Math;
 

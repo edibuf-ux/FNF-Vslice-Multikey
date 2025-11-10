@@ -1,13 +1,8 @@
 import flixel.FlxG;
-import funkin.Paths;
-import flixel.math.FlxMath;
-import funkin.ui.debug.charting.ChartEditorState;
+import funkin.Conductor;
 import funkin.play.notes.Strumline;
-import funkin.play.notes.SustainTrail;
-import funkin.play.notes.ScriptedStrumline;
 import funkin.play.notes.NoteSplash;
 import funkin.play.notes.NoteHoldCover;
-import funkin.Conductor;
 import StringTools;
 
 import MultikeySustainFixer;
