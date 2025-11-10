@@ -216,7 +216,7 @@ class MultikeyInputHandler extends Module
 
 	var _deviceBinds = [];
 	function setupControlCallbacks() {
-		if (!onMobile) {
+		if (!onMobile || ControlsHandler.usingExternalInputDevice) {
 			removeControlCallbacks(); //just in case
 			FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
 			FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
@@ -244,7 +244,7 @@ class MultikeyInputHandler extends Module
 		createMobileHitboxes(PlayState.instance);
 	}
 	function removeControlCallbacks() {
-		if (onMobile) return;
+		if (onMobile && !ControlsHandler.usingExternalInputDevice) return;
 		FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
         FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
 
@@ -261,7 +261,9 @@ class MultikeyInputHandler extends Module
 
 	function createMobileHitboxes(state) {
 		if (!onMobile) return;
+		if (ControlsHandler.usingExternalInputDevice) return;
 
+		//destroy old hitbox
         for (hint in state.hitbox.members) {
             hint.destroy();
         }
@@ -271,6 +273,7 @@ class MultikeyInputHandler extends Module
 		}
 		state.hitbox.trackedInputs = [];
 
+		
 		var isArrows = false;
 		if (Strumline.KEY_COUNT == 4) {
 			Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");

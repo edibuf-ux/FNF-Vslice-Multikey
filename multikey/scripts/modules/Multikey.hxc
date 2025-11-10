@@ -27,7 +27,9 @@ import funkin.util.PlatformUtil;
 import funkin.util.HostPlatform;
 import funkin.ui.FullScreenScaleMode;
 import funkin.modding.ModStore;
+import funkin.mobile.input.ControlsHandler;
 
+import MultikeyMobileControlScheme;
 import MultikeyKeyCountRegistry;
 import MultikeySustainFixer;
 
@@ -39,10 +41,9 @@ class Multikey extends Module
     {
         super("Multikey");
 
+        //#if mobile doesnt seem to work
         platform = PlatformUtil.detectHostPlatform();
         onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
-
-        //if (onMobile) Preferences.downscroll = true;
     }
 
     public function setKeyCount(keyCount:Int) 
@@ -151,6 +152,7 @@ class Multikey extends Module
 
         if (retry) 
         {
+            if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes";
             state.initStrumlines();
             fixMobileArrows(state);
         } 
@@ -165,10 +167,14 @@ class Multikey extends Module
     }
 
     function fixMobileArrows(state, retry = false) {
-        if (!onMobile) return;
+        //if (!onMobile) return;
+
+        var isArrows = Strumline.KEY_COUNT == 4 ? ModStore.get("MultikeyTempOriginalControlScheme") == "Arrows" : FlxG.save.data.multikeyControlScheme == MultikeyMobileControlScheme.ARROWS;
 
         var playerStrumline = state.playerStrumline;
         var opponentStrumline = state.opponentStrumline;
+
+        //base positions from initStrumlines()
         final cutoutSize = FullScreenScaleMode.gameCutoutSize.x / 2.5;
         
         playerStrumline.x = (FlxG.width / 2 + Constants.STRUMLINE_X_OFFSET) + (cutoutSize / 2.0);
@@ -177,36 +183,47 @@ class Multikey extends Module
         opponentStrumline.x = Constants.STRUMLINE_X_OFFSET + cutoutSize;
         opponentStrumline.y = Preferences.downscroll ? FlxG.height - opponentStrumline.strumlineNotes.height - Constants.STRUMLINE_Y_OFFSET - state.noteStyle.getStrumlineOffsets()[1] : Constants.STRUMLINE_Y_OFFSET;
         
-        final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
-        final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
-        final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
+        if (isArrows && !ControlsHandler.usingExternalInputDevice)
+        {
+            //positions from initNoteHitbox()
+            final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+            final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+            final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
 
-        if (!retry) {
-            playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
-            playerStrumline.setNoteSpacing(playerNoteSpacing * state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
-            for (strum in playerStrumline)
-            {
-                strum.width *= 2;
+            if (!retry) {
+                playerStrumline.strumlineScale.set(playerStrumlineScale, playerStrumlineScale);
+                playerStrumline.setNoteSpacing(playerNoteSpacing * state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
+                for (strum in playerStrumline)
+                {
+                    strum.width *= 2;
+                }
+                opponentStrumline.enterMiniMode(0.4 * amplification);
             }
-            opponentStrumline.enterMiniMode(0.4 * amplification);
-        }
 
-        playerStrumline.x = (FlxG.width - playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
-        playerStrumline.y = (FlxG.height - playerStrumline.strumlineNotes.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
-        if (state.currentChart?.noteStyle != "pixel")
-        {
-            if (platform == HostPlatform.ANDROID) playerStrumline.y += 10;
+            playerStrumline.x = (FlxG.width - playerStrumline.width) / 2 + Constants.STRUMLINE_X_OFFSET;
+            playerStrumline.y = (FlxG.height - playerStrumline.strumlineNotes.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
+            if (state.currentChart?.noteStyle != "pixel")
+            {
+                if (platform == HostPlatform.ANDROID) playerStrumline.y += 10;
+            }
+            else
+            {
+                playerStrumline.y -= 10;
+            }
+            opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
+            opponentStrumline.x -= 30;
         }
-        else
-        {
-            playerStrumline.y -= 10;
-        }
-        opponentStrumline.y = Constants.STRUMLINE_Y_OFFSET * 0.3;
-        opponentStrumline.x -= 30;
+        //fix health bar
+        var healthBarYPos:Float = (isArrows && !ControlsHandler.usingExternalInputDevice || Preferences.downscroll) ? FlxG.height * 0.1 : FlxG.height * 0.9;
+        state.healthBarBG.y = healthBarYPos;
+        state.healthBar.y = state.healthBarBG.y + 4;
+        state.scoreText.y = state.healthBarBG.y + 30;
+        state.iconP2.y = state.healthBar.y - (state.iconP2.height / 2);
+        state.iconP1.y = state.healthBar.y - (state.iconP1.height / 2);
 
+        //reset fade if needed
         var needsFade = playerStrumline.strumlineNotes.members[0].alpha == 0.0;
         if (needsFade) {
-            //refade so that its at the correct y level
             for (i in 0...playerStrumline.strumlineNotes.members.length) {
                 //playerStrumline.strumlineNotes.members[i].y += 10;
                 FlxTween.cancelTweensOf(playerStrumline.strumlineNotes.members[i]);
@@ -219,6 +236,8 @@ class Multikey extends Module
             opponentStrumline.fadeInArrows();
         }
 
+        //set back to original to make sure it doesnt break
+        Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
     }
 
     var _regenNoteData = false;
