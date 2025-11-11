@@ -39,7 +39,7 @@ Adds an extra multikey difficulty for certain songs:
 ### Adding Multikey to a song (manually)
 
 - Find the song you want to add it to in ```data/songs/``` (where the chart and metadata is)
-- Create a file called ```keyCounts.json``` (if using another variaion, it will need to have the suffix on the end (example: ```keyCounts-erect.json```)
+- Create a file called ```keyCounts.json``` (if using another variaion, it will need to have the suffix on the end (example: ```keyCounts-erect.json```))
 - The json needs to be formatted something like this:
 ```json
 {
