@@ -4,8 +4,11 @@
 
 ## Main Mulitkey Addon:
 - Adds 1-9K support
+- Custom controls (both keyboard and gamepad)
 - Almost Full Charter support
-- Experimental Mobile support (very buggy and wip!)
+- Experimental Mobile support
+	- Includes an option in the settings to switch to the currently unused lanes style as its probably easier to play with on mobile
+   	- Using a keyboard/gamepad on mobile is untested and may not work
 
 ## Multikey Charts Addon:
 Adds an extra multikey difficulty for certain songs:
@@ -21,17 +24,24 @@ Adds an extra multikey difficulty for certain songs:
 ## Known Issues:
 - Notes flickering in the charter (this usually fixes itself after placing a note)
 - Visual bug when stretching a sustain in the charter
-- Charter hitsounds not matching the notes at higher keycounts
-- Mobile issues when restarting song or changing difficulty (strumline dissappearing, input not working, crashes)
+- Crash when exiting chart playtest ([probably related to this issue](https://github.com/FunkinCrew/Funkin/issues/4400))
 
 ## How to use
 
-### Adding Multikey to a song
+### Adding Multikey to a song (through the chart editor)
+
+- In the chart editor, there's a new dialog window that can be opened from ```Window->Key Counts```
+- You can then switch the key count for the currently loaded difficulty (and you can switch to other difficulties to change those too)
+- Then you can save the key counts json file to the same folder as the chart/metadata (```data/songs/songname/```)
+
+### Adding Multikey to a song (manually)
+
 - Find the song you want to add it to in ```data/songs/``` (where the chart and metadata is)
 - Create a file called ```keyCounts.json``` (if using another variaion, it will need to have the suffix on the end (example: ```keyCounts-erect.json```)
 - The json needs to be formatted something like this:
 ```json
 {
+	"version": "1.0.0",
     "keyCounts": {
         "difficultyname": 7
     }
@@ -39,7 +49,7 @@ Adds an extra multikey difficulty for certain songs:
 ```
 - You can then set the difficulty name and keycount number to what you want, for example if you want the hard difficulty to be 6K, you would add ```"hard": 6```
 
-(You will also need to refresh loaded data with F5 after adding/changing a key count json!)
+(You may also need to refresh loaded data with F5 after adding/changing a key count json!)
 
 ### Setting up a custom notestyle
 - Each notestyle that supports multikey will need to have its own set of multikey data, you can copy from the existing ones for the base note styles
