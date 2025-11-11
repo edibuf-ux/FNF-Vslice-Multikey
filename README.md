@@ -34,6 +34,8 @@ Adds an extra multikey difficulty for certain songs:
 - You can then switch the key count for the currently loaded difficulty (and you can switch to other difficulties to change those too)
 - Then you can save the key counts json file to the same folder as the chart/metadata (```data/songs/songname/```)
 
+![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/keycounts.jpg)
+
 ### Adding Multikey to a song (manually)
 
 - Find the song you want to add it to in ```data/songs/``` (where the chart and metadata is)
