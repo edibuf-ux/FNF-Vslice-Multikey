@@ -22,6 +22,7 @@ import funkin.ui.FullScreenScaleMode;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
 import funkin.ui.debug.charting.handlers.ChartEditorToolboxHandler;
+import funkin.ui.debug.charting.handlers.ChartEditorAudioHandler;
 
 import haxe.Timer;
 import haxe.Json;
@@ -293,15 +294,28 @@ class Multikey extends Module
         fixMobileArrows(PlayState.instance);
     }
 
-    //do note splashes
+    
     override public function onNoteHit(event)
     {
         super.onNoteHit(event);
 
+        //do note splashes
         if (event.doesNotesplash)
         {
             PlayState.instance.playerStrumline.playNoteSplash(event.note.noteData.data % Strumline.KEY_COUNT);
             event.doesNotesplash = false;
+        }
+
+        //override charter hitsounds
+        if (Std.isOfType(FlxG.state, ChartEditorState) && PlayState.instance == null) {
+            event.cancel();
+            switch (Math.floor(event.note.noteData.data / Strumline.KEY_COUNT))
+            {
+                case 0: // Player
+                    if (FlxG.state.hitsoundVolumePlayer > 0) ChartEditorAudioHandler.playSound(FlxG.state, Paths.sound('chartingSounds/hitNotePlayer'), FlxG.state.hitsoundVolumePlayer);
+                case 1: // Opponent
+                    if (FlxG.state.hitsoundVolumeOpponent > 0) ChartEditorAudioHandler.playSound(FlxG.state, Paths.sound('chartingSounds/hitNoteOpponent'), FlxG.state.hitsoundVolumeOpponent);
+            }
         }
     }
 
