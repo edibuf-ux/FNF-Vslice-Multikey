@@ -1,13 +1,63 @@
 {
-	"strumNames": ["Left","Down","Up","Right","Space","Left","Down","Up","Right"],
-	"noteColors": ["Purple","Blue","Green","Red","White","Yellow","Violet","Darkred","Darkblue"],
-	"noteColorsRGB": ["0xFFC34B9A","0xFF00FFFF","0xFF12FB06","0xFFF9393F","0xFFcccccc","0xFFf4f400","0xFF823cff","0xFFe40000","0xFF0033ff"],
+	"version": "1.0.0",
 	"noteDirections": ["Left","Down","Up","Right","Space","AltLeft","AltDown","AltUp","AltRight"],
-	"notePrefix": "note",
-	"staticPrefix": "static",
-	"pressPrefix": "pressed",
-	"confirmPrefix": "confirm",
-	"keyData": [
+	"noteColorsRGB": ["0xFFC34B9A","0xFF00FFFF","0xFF12FB06","0xFFF9393F","0xFFcccccc","0xFFf4f400","0xFF823cff","0xFFe40000","0xFF0033ff"],
+	"noteAnimations": [
+		{ "prefix": "noteLeft0" },
+		{ "prefix": "noteDown0" },
+		{ "prefix": "noteUp0" },
+		{ "prefix": "noteRight0" },
+		{ "prefix": "noteSpace0" },
+		{ "prefix": "noteAltLeft0" },
+		{ "prefix": "noteAltDown0" },
+		{ "prefix": "noteAltUp0" },
+		{ "prefix": "noteAltRight0" }
+	],
+	"strumStaticAnimations": [
+		{ "prefix": "staticLeft0" },
+		{ "prefix": "staticDown0" },
+		{ "prefix": "staticUp0" },
+		{ "prefix": "staticRight0" },
+		{ "prefix": "staticSpace0" },
+		{ "prefix": "staticLeft0" },
+		{ "prefix": "staticDown0" },
+		{ "prefix": "staticUp0" },
+		{ "prefix": "staticRight0" }
+	],
+	"strumPressAnimations": [
+		{ "prefix": "pressedLeft0" },
+		{ "prefix": "pressedDown0" },
+		{ "prefix": "pressedUp0" },
+		{ "prefix": "pressedRight0" },
+		{ "prefix": "pressedSpace0" },
+		{ "prefix": "pressedAltLeft0" },
+		{ "prefix": "pressedAltDown0" },
+		{ "prefix": "pressedAltUp0" },
+		{ "prefix": "pressedAltRight0" }
+	],
+	"strumConfirmAnimations": [
+		{ "prefix": "confirmLeft0" },
+		{ "prefix": "confirmDown0" },
+		{ "prefix": "confirmUp0" },
+		{ "prefix": "confirmRight0" },
+		{ "prefix": "confirmSpace0" },
+		{ "prefix": "confirmAltLeft0" },
+		{ "prefix": "confirmAltDown0" },
+		{ "prefix": "confirmAltUp0" },
+		{ "prefix": "confirmAltRight0" }
+	],
+	"strumConfirmHoldAnimations": [
+		{ "prefix": "confirmLeft0" },
+		{ "prefix": "confirmDown0" },
+		{ "prefix": "confirmUp0" },
+		{ "prefix": "confirmRight0" },
+		{ "prefix": "confirmSpace0" },
+		{ "prefix": "confirmAltLeft0" },
+		{ "prefix": "confirmAltDown0" },
+		{ "prefix": "confirmAltUp0" },
+		{ "prefix": "confirmAltRight0" }
+	],
+	"keyCountData": [
 		{
 			"noteDirectionIndexes": [4],
 			"singDirectionIndexes": [2],

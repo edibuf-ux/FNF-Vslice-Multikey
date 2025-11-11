@@ -1,5 +1,6 @@
 import funkin.Paths;
 import funkin.modding.module.Module;
+import funkin.util.VersionUtil;
 import haxe.Json;
 
 typedef MultikeyNoteStyleKeyCountData =
@@ -25,21 +26,21 @@ typedef MultikeyNoteStyleKeyCountData =
 
 typedef MultikeyNoteStyleData = 
 {
-    var strumNames:Array<String>;
-    
-    var noteColors:Array<String>;
-
-    var noteColorsRGB:Array<String>;
+    var version:String;
 
     var noteDirections:Array<String>;
 
-    var notePrefix:String;
+    var noteColorsRGB:Array<String>;
+
+    var noteAnimations:Array<UnnamedAnimationData>;
     
-    var staticPrefix:String;
+    var strumStaticAnimations:Array<UnnamedAnimationData>;
 
-    var pressPrefix:String;
+    var strumPressAnimations:Array<UnnamedAnimationData>;
 
-    var confirmPrefix:String;
+    var strumConfirmAnimations:Array<UnnamedAnimationData>;
+
+    var strumConfirmHoldAnimations:Array<UnnamedAnimationData>;
 
     var keyData:Array<MultikeyNoteStyleKeyCountData>;
 
@@ -50,6 +51,9 @@ typedef MultikeyNoteStyleData =
 
 class MultikeyNoteStyleHelper extends Module
 {
+    static var MULTIKEY_DATA_VERSION:Version = "1.0.0";
+    static var MULTIKEY_DATA_VERSION_RULE:VersionRule = "1.0.x";
+
     public function new() 
     {
         super("MultikeyNoteStyleHelper");
@@ -75,29 +79,32 @@ class MultikeyNoteStyleHelper extends Module
 
     static function validateMultikeyData(multikeyData) 
     {
-        if (multikeyData.keyData == null || multikeyData.keyData.length == 0) throwMultikeyError("No Key data found");
+        if (multikeyData.version == null) throwMultikeyError("No version found");
+
+        if (!VersionUtil.validateVersionStr(multikeyData.version, MULTIKEY_DATA_VERSION_RULE))
+        {
+            throwMultikeyError("Mismatching version! (Expected: " + MULTIKEY_DATA_VERSION_RULE + ", Found: " + multikeyData.version + ")");
+        }
+
+        if (multikeyData.keyCountData == null || multikeyData.keyCountData.length == 0) throwMultikeyError("No Key data found");
         if (multikeyData.splashData == null || multikeyData.splashData.length == 0) throwMultikeyError("No splash data found");
         if (multikeyData.holdCoverData == null || multikeyData.holdCoverData.length == 0) throwMultikeyError("No hold cover data found");
-        if (multikeyData.strumNames == null || multikeyData.strumNames.length == 0) throwMultikeyError("No strum name data found");
-        if (multikeyData.noteColors == null || multikeyData.noteColors.length == 0) throwMultikeyError("No note color data found");
         if (multikeyData.noteColorsRGB == null || multikeyData.noteColorsRGB.length == 0) throwMultikeyError("No note rgb color data found");
         if (multikeyData.noteDirections == null || multikeyData.noteDirections.length == 0) throwMultikeyError("No note direction data found");
         
-        if (multikeyData.notePrefix == null) multikeyData.notePrefix = "note";
-        if (multikeyData.staticPrefix == null) multikeyData.staticPrefix = "static";
-        if (multikeyData.pressPrefix == null) multikeyData.pressPrefix = "press";
-        if (multikeyData.confirmPrefix == null) multikeyData.confirmPrefix = "confirm";
+        if (multikeyData.noteAnimations == null || multikeyData.noteAnimations.length == 0) throwMultikeyError("No note animation data found");
+        if (multikeyData.strumStaticAnimations == null || multikeyData.strumStaticAnimations.length == 0) throwMultikeyError("No strum static animation data found");
+        if (multikeyData.strumPressAnimations == null || multikeyData.strumPressAnimations.length == 0) throwMultikeyError("No strum press animation data found");
+        if (multikeyData.strumConfirmAnimations == null || multikeyData.strumConfirmAnimations.length == 0) throwMultikeyError("No strum confirm animation data found");
+        if (multikeyData.strumConfirmHoldAnimations == null || multikeyData.strumConfirmHoldAnimations.length == 0) throwMultikeyError("No strum confirm hold animation data found");
 
         var keyCount = 0;
-        for (data in multikeyData.keyData) 
+        for (data in multikeyData.keyCountData) 
         {
             keyCount++;
 
             for (index in data.noteDirectionIndexes) 
             {
-                if (index > multikeyData.strumNames.length-1) throwMultikeyError("Note direction index too high for strum names!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.strumNames.length + ")");
-                if (index > multikeyData.noteColors.length-1) throwMultikeyError("Note direction index too high for note colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColors.length + ")");
-                if (index > multikeyData.noteColorsRGB.length-1) throwMultikeyError("Note direction index too high for note rgb colors!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteColorsRGB.length + ")");
                 if (index > multikeyData.noteDirections.length-1) throwMultikeyError("Note direction index too high for note directions!" + " (Keycount: " + keyCount + ", Index: " + index + ", Array Length: " + multikeyData.noteDirections.length + ")");
             }
 
@@ -135,12 +142,17 @@ class MultikeyNoteStyleHelper extends Module
             keyIndex++;
         }
 
-        var maxNoteColors = multikeyData.noteColors.length;
-        if (maxNoteColors != multikeyData.noteColorsRGB.length) throwMultikeyError("Mismatching note rgb color array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note rgb colors length: " + multikeyData.noteColorsRGB.length + ")");
-        if (maxNoteColors != multikeyData.strumNames.length) throwMultikeyError("Mismatching strum names array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Strum names length: " + multikeyData.strumNames.length + ")");
-        if (maxNoteColors != multikeyData.noteDirections.length) throwMultikeyError("Mismatching note directions array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Note directions length: " + multikeyData.noteDirections.length + ")");
-        if (maxNoteColors != multikeyData.splashData.length) throwMultikeyError("Mismatching splash data array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Splash data length: " + multikeyData.splashData.length + ")");
-        if (maxNoteColors != multikeyData.holdCoverData.length) throwMultikeyError("Mismatching hold cover data array length for note colors array!" + " (Note colors length: " + maxNoteColors + ", Hold cover data length: " + multikeyData.holdCoverData.length + ")");
+        var maxNoteDirections = multikeyData.noteDirections.length;
+        if (maxNoteDirections != multikeyData.noteColorsRGB.length) throwMultikeyError("Mismatching note rgb color array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Note rgb colors length: " + multikeyData.noteColorsRGB.length + ")");
+
+        if (maxNoteDirections != multikeyData.noteAnimations.length) throwMultikeyError("Mismatching note animations array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Note animations length: " + multikeyData.noteAnimations.length + ")");
+        if (maxNoteDirections != multikeyData.strumStaticAnimations.length) throwMultikeyError("Mismatching strum static animations array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Strum static animations length: " + multikeyData.strumStaticAnimations.length + ")");
+        if (maxNoteDirections != multikeyData.strumPressAnimations.length) throwMultikeyError("Mismatching strum press animations array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Strum press animations length: " + multikeyData.strumPressAnimations.length + ")");
+        if (maxNoteDirections != multikeyData.strumConfirmAnimations.length) throwMultikeyError("Mismatching strum confirm animations array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Strum confirm animations length: " + multikeyData.strumConfirmAnimations.length + ")");
+        if (maxNoteDirections != multikeyData.strumConfirmHoldAnimations.length) throwMultikeyError("Mismatching strum confirm hold animations array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Strum confirm hold animations length: " + multikeyData.strumConfirmHoldAnimations.length + ")");
+
+        if (maxNoteDirections != multikeyData.splashData.length) throwMultikeyError("Mismatching splash data array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Splash data length: " + multikeyData.splashData.length + ")");
+        if (maxNoteDirections != multikeyData.holdCoverData.length) throwMultikeyError("Mismatching hold cover data array length for note directions array!" + " (Note directions length: " + maxNoteDirections + ", Hold cover data length: " + multikeyData.holdCoverData.length + ")");
     }
 
     static inline function throwMultikeyError(error) {
@@ -164,31 +176,45 @@ class MultikeyNoteStyleHelper extends Module
         }
         function doPrettyLineRaw(ind, n, i) return ind+'"'+n+'": ' + i + '';
 
-        string += doPrettyLineArr("\n\t","strumNames", d.strumNames) + ",";
-        string += doPrettyLineArr("\n\t","noteColors", d.noteColors) + ",";
-        string += doPrettyLineArr("\n\t","noteColorsRGB", d.noteColorsRGB) + ",";
+        string += doPrettyLineStr("\n\t","version", MULTIKEY_DATA_VERSION) + ",";
         string += doPrettyLineArr("\n\t","noteDirections", d.noteDirections) + ",";
+        string += doPrettyLineArr("\n\t","noteColorsRGB", d.noteColorsRGB) + ",";
 
-        string += doPrettyLineStr("\n\t","notePrefix", d.notePrefix) + ",";
-        string += doPrettyLineStr("\n\t","staticPrefix", d.staticPrefix) + ",";
-        string += doPrettyLineStr("\n\t","pressPrefix", d.pressPrefix) + ",";
-        string += doPrettyLineStr("\n\t","confirmPrefix", d.confirmPrefix) + ",";
+        string += '\n\t"noteAnimations": [';
+        for (i in 0...d.noteAnimations.length) { string += "\n\t\t" + Json.stringify(d.noteAnimations[i]) + (i < d.noteAnimations.length-1 ? "," : "");}
+        string += "\n\t],";
 
-        string += '\n\t"keyData": [';
-        for (i in 0...d.keyData.length) {
+        string += '\n\t"strumStaticAnimations": [';
+        for (i in 0...d.strumStaticAnimations.length) { string += "\n\t\t" + Json.stringify(d.strumStaticAnimations[i]) + (i < d.strumStaticAnimations.length-1 ? "," : "");}
+        string += "\n\t],";
+
+        string += '\n\t"strumPressAnimations": [';
+        for (i in 0...d.strumPressAnimations.length) { string += "\n\t\t" + Json.stringify(d.strumPressAnimations[i]) + (i < d.strumPressAnimations.length-1 ? "," : "");}
+        string += "\n\t],";
+        
+        string += '\n\t"strumConfirmAnimations": [';
+        for (i in 0...d.strumConfirmAnimations.length) { string += "\n\t\t" + Json.stringify(d.strumConfirmAnimations[i]) + (i < d.strumConfirmAnimations.length-1 ? "," : "");}
+        string += "\n\t],";
+
+        string += '\n\t"strumConfirmHoldAnimations": [';
+        for (i in 0...d.strumConfirmHoldAnimations.length) { string += "\n\t\t" + Json.stringify(d.strumConfirmHoldAnimations[i]) + (i < d.strumConfirmHoldAnimations.length-1 ? "," : "");}
+        string += "\n\t],";
+
+        string += '\n\t"keyCountData": [';
+        for (i in 0...d.keyCountData.length) {
             string += "\n\t\t{";
 
-            string += doPrettyLineRaw("\n\t\t\t","noteDirectionIndexes", d.keyData[i].noteDirectionIndexes) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","singDirectionIndexes", d.keyData[i].singDirectionIndexes) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","noteScale", d.keyData[i].noteScale) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","noteSpacing", d.keyData[i].noteSpacing) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","noteXOffset", d.keyData[i].noteXOffset) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","strumlineOffsets", d.keyData[i].strumlineOffsets) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","holdNoteOffsets", d.keyData[i].holdNoteOffsets) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","holdCoverOffsets", d.keyData[i].holdCoverOffsets) + ",";
-            string += doPrettyLineRaw("\n\t\t\t","splashOffsets", d.keyData[i].splashOffsets);
+            string += doPrettyLineRaw("\n\t\t\t","noteDirectionIndexes", d.keyCountData[i].noteDirectionIndexes) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","singDirectionIndexes", d.keyCountData[i].singDirectionIndexes) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","noteScale", d.keyCountData[i].noteScale) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","noteSpacing", d.keyCountData[i].noteSpacing) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","noteXOffset", d.keyCountData[i].noteXOffset) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","strumlineOffsets", d.keyCountData[i].strumlineOffsets) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","holdNoteOffsets", d.keyCountData[i].holdNoteOffsets) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","holdCoverOffsets", d.keyCountData[i].holdCoverOffsets) + ",";
+            string += doPrettyLineRaw("\n\t\t\t","splashOffsets", d.keyCountData[i].splashOffsets);
 
-            string += "\n\t\t}" + (i < d.keyData.length-1 ? "," : "");
+            string += "\n\t\t}" + (i < d.keyCountData.length-1 ? "," : "");
         }
         string += "\n\t],";
 

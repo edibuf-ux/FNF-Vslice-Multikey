@@ -1,9 +1,9 @@
-import funkin.Paths;
-import funkin.graphics.FunkinSprite;
 import flixel.FlxG;
+import funkin.Paths;
+import funkin.data.animation.AnimationDataUtil;
+import funkin.graphics.FunkinSprite;
 import funkin.play.notes.Strumline;
 import funkin.play.notes.notestyle.NoteStyle;
-import funkin.data.animation.AnimationDataUtil;
 import funkin.util.Constants;
 import funkin.util.assets.FlxAnimationUtil;
 
@@ -23,52 +23,46 @@ class PixelNoteStyle extends NoteStyle
         return multikeyData;
     }
     public inline function getKeyCountData() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1];
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1];
     }
     public inline function getMaxKeyCount() {
-        return multikeyData.keyData.length;
+        return multikeyData.keyCountData.length;
     }
-    public inline function getMaxNoteColors() {
-        return multikeyData.noteColors.length;
+    public inline function getMaxNoteDirections() {
+        return multikeyData.noteDirections.length;
     }
     public inline function getMultikeyNoteDirectionName(dir) {
-        return multikeyData.noteDirections[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
-    }
-    public inline function getMultikeyStrumDirectionName(dir) {
-        return multikeyData.strumNames[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+        return multikeyData.noteDirections[multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
     public inline function getMultikeySingDirection(dir) {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].singDirectionIndexes[dir % Strumline.KEY_COUNT];
-    }
-    public inline function getMultikeyNoteColor(dir) {
-        return multikeyData.noteColors[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].singDirectionIndexes[dir % Strumline.KEY_COUNT];
     }
     public inline function getMultikeyNoteColorRGB(dir) {
-        return multikeyData.noteColorsRGB[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+        return multikeyData.noteColorsRGB[multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
     public inline function getMultikeyNoteDirectionIndex(dir) {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT];
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT];
     }
     public inline function getMultikeySplashData(dir) {
-        return multikeyData.splashData[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+        return multikeyData.splashData[multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
     public inline function getMultikeyHoldCoverData(dir) {
-        return multikeyData.holdCoverData[multikeyData.keyData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
+        return multikeyData.holdCoverData[multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteDirectionIndexes[dir % Strumline.KEY_COUNT]];
     }
     public inline function getMultikeyNoteScale() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteScale;
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteScale;
     }
     public inline function getMultikeyNoteSpacing() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteSpacing;
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteSpacing;
     }
     public inline function getMultikeyNoteXOffset() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].noteXOffset;
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].noteXOffset;
     }
     public inline function getMultikeySplashXOffset() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].splashOffsets[0];
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].splashOffsets[0];
     }
     public inline function getMultikeySplashYOffset() {
-        return multikeyData.keyData[Strumline.KEY_COUNT-1].splashOffsets[1];
+        return multikeyData.keyCountData[Strumline.KEY_COUNT-1].splashOffsets[1];
     }
 
     ///////////overrides
@@ -106,10 +100,10 @@ class PixelNoteStyle extends NoteStyle
         _holdCoverOffsets = [];
         _holdNoteOffsets = [];
         for (i in 0...getMaxKeyCount()) {
-            _strumlineOffsets.push(addOffsetArrays(multikeyData.keyData[i].strumlineOffsets, _data?.assets?.noteStrumline?.offsets ?? fallback?.getStrumlineOffsets() ?? [0.0, 0.0]));
-            _splashOffsets.push(addOffsetArrays(multikeyData.keyData[i].splashOffsets, _data?.assets?.noteSplash?.offsets ?? fallback?.getSplashOffsets() ?? [0.0, 0.0]));
-            _holdCoverOffsets.push(addOffsetArrays(multikeyData.keyData[i].holdCoverOffsets, _data?.assets?.holdNoteCover?.offsets ?? fallback?.getHoldCoverOffsets() ?? [0.0, 0.0]));
-            _holdNoteOffsets.push(addOffsetArrays(multikeyData.keyData[i].holdNoteOffsets, _data?.assets?.holdNote?.offsets ?? fallback?.getHoldNoteOffsets() ?? [0.0, 0.0]));
+            _strumlineOffsets.push(addOffsetArrays(multikeyData.keyCountData[i].strumlineOffsets, _data?.assets?.noteStrumline?.offsets ?? fallback?.getStrumlineOffsets() ?? [0.0, 0.0]));
+            _splashOffsets.push(addOffsetArrays(multikeyData.keyCountData[i].splashOffsets, _data?.assets?.noteSplash?.offsets ?? fallback?.getSplashOffsets() ?? [0.0, 0.0]));
+            _holdCoverOffsets.push(addOffsetArrays(multikeyData.keyCountData[i].holdCoverOffsets, _data?.assets?.holdNoteCover?.offsets ?? fallback?.getHoldCoverOffsets() ?? [0.0, 0.0]));
+            _holdNoteOffsets.push(addOffsetArrays(multikeyData.keyCountData[i].holdNoteOffsets, _data?.assets?.holdNote?.offsets ?? fallback?.getHoldNoteOffsets() ?? [0.0, 0.0]));
         }
     }
     inline function addOffsetArrays(a, b) {
@@ -117,16 +111,12 @@ class PixelNoteStyle extends NoteStyle
     }
 
     override function getStrumlineAnimationData(dir) {
-        var noteName = getMultikeyNoteDirectionName(dir);
-        var staticName = multikeyData.staticPrefix + getMultikeyStrumDirectionName(dir);
-        var pressName = multikeyData.pressPrefix + noteName;
-        var confirmName = multikeyData.confirmPrefix + noteName;
-
+        var index = getMultikeyNoteDirectionIndex(dir);
         var result = [
-            AnimationDataUtil.toNamed({prefix: staticName},"static"),
-            AnimationDataUtil.toNamed({prefix: pressName}, "press"),
-            AnimationDataUtil.toNamed({prefix: confirmName}, "confirm"),
-            AnimationDataUtil.toNamed({prefix: confirmName}, "confirm-hold")
+            AnimationDataUtil.toNamed(multikeyData.strumStaticAnimations[index],"static"),
+            AnimationDataUtil.toNamed(multikeyData.strumPressAnimations[index], "press"),
+            AnimationDataUtil.toNamed(multikeyData.strumConfirmAnimations[index], "confirm"),
+            AnimationDataUtil.toNamed(multikeyData.strumConfirmHoldAnimations[index], "confirm-hold")
         ];
 		return result;
     }
@@ -134,7 +124,10 @@ class PixelNoteStyle extends NoteStyle
     override function buildNoteAnimations(target) {
         for (i in 0...Strumline.KEY_COUNT) {
             var noteName = getMultikeyNoteDirectionName(i);
-            target.animation.addByPrefix(noteName + "Scroll", multikeyData.notePrefix + noteName);
+            var index = getMultikeyNoteDirectionIndex(i);
+            var data = AnimationDataUtil.toNamed(multikeyData.noteAnimations[index],"");
+            target.animation.addByPrefix(noteName + "Scroll", data.prefix ?? '', data.frameRate ?? 24, data.looped ?? false,
+                data.flipX, data.flipY);
         }
     }
 
@@ -210,12 +203,12 @@ class PixelNoteStyle extends NoteStyle
     }
 
     override function fetchHoldCoverAnimationData(dir) {
-        var color = getMultikeyNoteColor(dir);
+        var index = getMultikeyNoteDirectionIndex(dir);
         var data = getMultikeyHoldCoverData(dir);
         return [
-            AnimationDataUtil.toNamed(data.start, "holdCoverStart" + color),
-            AnimationDataUtil.toNamed(data.hold, "holdCover" + color),
-            AnimationDataUtil.toNamed(data.end, "holdCoverEnd" + color)
+            AnimationDataUtil.toNamed(data.start, "holdCoverStart" + index),
+            AnimationDataUtil.toNamed(data.hold, "holdCover" + index),
+            AnimationDataUtil.toNamed(data.end, "holdCoverEnd" + index)
         ];
     }
 

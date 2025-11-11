@@ -205,7 +205,7 @@ class MultikeyDebugState extends MusicBeatState
                 for (holdNote in playerStrumline.holdNotes.members) {
                     playerStrumline.playNoteHoldCover(holdNote);
                     holdNote.sustainLength = (holdNote.strumTime + holdNote.fullSustainLength) - localConductor.songPosition;
-                    MultikeySustainFixer.fixSustain(holdNote, noteStyle, playerStrumline.maxNoteColors, false);
+                    MultikeySustainFixer.fixSustain(holdNote, noteStyle, playerStrumline.maxNoteDirections, false);
                 }
                 playerStrumline.updateNotes();  
         }

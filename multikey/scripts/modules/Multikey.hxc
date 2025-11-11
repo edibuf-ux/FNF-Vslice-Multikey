@@ -368,7 +368,8 @@ class Multikey extends Module
                 var noteStyle = NoteStyleRegistry.instance.fetchEntry(noteSprite.noteStyle);
                 var prefix = FunkinStringTools.toTitleCase(noteStyle.id);
                 var noteName = noteStyle.scriptCall("getMultikeyNoteDirectionName", [noteSprite.noteData.data]);
-                noteSprite.animation.addByPrefix(prefix + noteName + "Scroll", prefix + noteStyle.scriptCall("getMultikeyData").notePrefix + noteName);
+                var noteIndex = noteStyle.scriptCall("getMultikeyNoteDirectionIndex", [noteSprite.noteData.data]);
+                noteSprite.animation.addByPrefix(prefix + noteName + "Scroll", prefix + noteStyle.scriptCall("getMultikeyData").noteAnimations[noteIndex].prefix);
                 noteSprite.animation.play(prefix + noteName + "Scroll");
             }
         }
@@ -418,10 +419,10 @@ class Multikey extends Module
             if (updateSustainStuff) 
             {
                 var noteStyle = NoteStyleRegistry.instance.fetchEntry(holdNoteSprite.noteStyle);
-                var maxNoteColors = noteStyle.scriptCall("getMaxNoteColors");
+                var maxNoteDirections = noteStyle.scriptCall("getMaxNoteDirections");
 
                 if (holdNoteSprite.noteData != null) holdNoteSprite.noteDirection = holdNoteSprite.noteData.data % Strumline.KEY_COUNT;
-                MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteColors, true);
+                MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteDirections, true);
                 holdNoteSprite.updateHitbox();
 
                 foundData.sustainLength = holdNoteSprite.sustainLength;

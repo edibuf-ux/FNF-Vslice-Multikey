@@ -10,12 +10,12 @@ import MultikeySustainFixer;
 class MultikeyStrumline extends Strumline {
 
     public var noteXOffset:Float = 0;
-    public var maxNoteColors:Int = 4;
+    public var maxNoteDirections:Int = 4;
 
     override public function new(noteStyle:NoteStyle, isPlayer:Bool, ?scrollSpeed:Float) {
         super(noteStyle, isPlayer, scrollSpeed);
         noteXOffset = noteStyle.scriptCall("getMultikeyNoteXOffset");
-        maxNoteColors = noteStyle.scriptCall("getMaxNoteColors");
+        maxNoteDirections = noteStyle.scriptCall("getMaxNoteDirections");
 
         noteSplashes.maxSize = Math.ceil(noteStyle.scriptCall("getMaxKeyCount")*1.5);
         noteHoldCovers.maxSize = noteStyle.scriptCall("getMaxKeyCount");
@@ -58,7 +58,7 @@ class MultikeyStrumline extends Strumline {
         holdNoteSprite.x += getXPos(holdNoteSprite.noteDirection);
 
         holdNoteSprite.x += holdNoteSprite.width / 2;
-        MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteColors, false);
+        MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteDirections, false);
         holdNoteSprite.x -= holdNoteSprite.width / 2;
 
         return holdNoteSprite;
@@ -72,7 +72,7 @@ class MultikeyStrumline extends Strumline {
         var cover:NoteHoldCover = this.constructNoteHoldCover();
 
         //custom change
-        MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteColors, false); //should fix first frame flicker on hit
+        MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteDirections, false); //should fix first frame flicker on hit
 
         if (cover != null)
         {
@@ -155,7 +155,7 @@ class MultikeyStrumline extends Strumline {
         {
             if (holdNote == null || !holdNote.alive) continue;
             if (conductorInUse.songPosition > holdNote.strumTime && holdNote.hitNote) {
-                MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteColors, false);
+                MultikeySustainFixer.fixSustain(holdNote, noteStyle, maxNoteDirections, false);
             }
         }
     }
