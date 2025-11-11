@@ -224,6 +224,9 @@ class Multikey extends Module
         state.iconP2.y = state.healthBar.y - (state.iconP2.height / 2);
         state.iconP1.y = state.healthBar.y - (state.iconP1.height / 2);
 
+        playerStrumline.isDownscroll = (isArrows && !ControlsHandler.usingExternalInputDevice || Preferences.downscroll);
+        opponentStrumline.isDownscroll = (isArrows && !ControlsHandler.usingExternalInputDevice || Preferences.downscroll);
+
         //reset fade if needed
         var needsFade = playerStrumline.strumlineNotes.members[0].alpha == 0.0;
         if (needsFade) {
