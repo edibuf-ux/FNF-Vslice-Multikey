@@ -4,6 +4,7 @@ import funkin.modding.module.Module;
 import funkin.play.notes.Strumline;
 import funkin.util.Constants;
 import funkin.util.ReflectUtil;
+import funkin.util.VersionUtil;
 import funkin.util.assets.DataAssets;
 
 import haxe.Json;
@@ -12,11 +13,17 @@ import StringTools;
 
 typedef MultikeyKeyCounts = 
 {
+    var version:String;
+
     var keyCounts:Map<String, Int>;
 }
 
 class MultikeyKeyCountRegistry extends Module
 {
+    var KEYCOUNT_DATA_VERSION:Version = "1.0.0";
+    var KEYCOUNT_DATA_VERSION_RULE:VersionRule = "1.0.x";
+    var registryId:String = "KEYCOUNTS";
+
     static var entries = ["" => null];
     public function new() 
     {
@@ -30,6 +37,8 @@ class MultikeyKeyCountRegistry extends Module
         var entryIdList:Array<String> = DataAssets.listDataFilesInPath('songs/', '-metadata.json').map(function(songDataPath:String):String {
             return songDataPath.split('/')[0];
         });
+
+        var entriesToLoad = [];
         
         for (song in entryIdList) 
         {
@@ -39,54 +48,102 @@ class MultikeyKeyCountRegistry extends Module
             for (variation in songData.variations)
             {
                 var suffix:String = variation != Constants.DEFAULT_VARIATION ? "-" + variation : "";
-
                 var path = Paths.file("data/songs/" + song + "/keyCounts" + suffix + ".json");
                 if (Assets.exists(path))
                 {
-                    var entryID = song+":"+variation;
-                    var entry:MultikeyKeyCounts = {keyCounts: ["" => 4]};
-                    entry.keyCounts.clear(); //clearing since we needed it initialized as a map by creating it with a valid key first
-
-                    var data = Json.parse(Assets.getText(path));
-                    if (data.keyCounts == null) continue;
-
-                    var logString = "";
-                    for (diff in ReflectUtil.fields(data.keyCounts))
-                    {
-                        var keyCount = ReflectUtil.getProperty(data.keyCounts, diff);
-                        entry.keyCounts.set(diff, keyCount);
-                        logString += ", " + diff + " = " + keyCount; 
-                    }
-
-                    trace('  Loaded entry data: KeyCounts(' + song + logString + ")");
-                    entries.set(entryID, entry);
+                    entriesToLoad.push({song: song, variation: variation, path: path});
                 }
             }
         }
+
+        log('Parsing '+entriesToLoad.length+' entries...');
+        for (data in entriesToLoad) {
+            var song = data.song;
+            var variation = data.variation;
+            var path = data.path;
+
+            var entryID = song+"-"+variation;
+            var data = Json.parse(Assets.getText(path));
+            if (!migrateVersion(data, entryID) || data.keyCounts == null)
+            {
+                trace('  Failed to load entry data: ' + entryID);
+                continue;
+            }
+
+            var entry:MultikeyKeyCounts = {version: data.version, keyCounts: ["" => 4]};
+            entry.keyCounts.clear(); //clearing since we needed it initialized as a map by creating it with a valid key first
+
+            var logString = "";
+            for (diff in ReflectUtil.fields(data.keyCounts))
+            {
+                var keyCount = ReflectUtil.getProperty(data.keyCounts, diff);
+                entry.keyCounts.set(diff, keyCount);
+                logString += ", " + diff + " = " + keyCount; 
+            }
+
+            trace('  Loaded entry data: KeyCounts(' + entryID + logString + ")");
+            entries.set(entryID, entry);
+        }
     }
 
-    public static function fetchEntry(song:String, variation:String, difficulty:String) {
-        var entryID:String = song+":"+variation;
-        if (!hasEntry(song, variation, difficulty)) return 4;
-        return entries.get(entryID).keyCounts.get(difficulty);
-    }
-    public static function hasEntry(song:String, variation:String, difficulty:String) {
-        var entryI:String = song+":"+variation;
-        if (entries.exists(entryID)) return entries.get(entryID).keyCounts.exists(difficulty);
+    public function migrateVersion(entryData, entryID) {
+        if (entryData == null || entryData.version == null)
+        {
+            trace('['+registryId+'] Entry '+entryID+' could not be JSON-parsed or does not have a parseable version.');
+            return false;
+        }
+
+        if (KEYCOUNT_DATA_VERSION_RULE == null || VersionUtil.validateVersionStr(entryData.version, KEYCOUNT_DATA_VERSION_RULE))
+        {
+            return true;
+        }
+        else
+        {
+            trace('['+registryId+'] Entry '+entryID+' does not support migration to version '+KEYCOUNT_DATA_VERSION_RULE+'.');
+            return false;
+        }
         return false;
     }
 
-    public static function setEntry(song:String, variation:String, difficulty:String, kc:Int) {
-        var entryID:String = song+":"+variation;
+    public static function fetchEntry(song:String, variation:String, difficulty:String) 
+    {
+        var entryID:String = song + "-" + variation;
+        if (!hasEntry(song, variation, difficulty)) return 4;
+        return entries.get(entryID).keyCounts.get(difficulty);
+    }
+    public static function hasEntry(song:String, variation:String, difficulty:String) 
+    {
+        var entryID:String = song + "-" + variation;
+        if (entries.exists(entryID)) return entries.get(entryID).keyCounts.exists(difficulty);
+        return false;
+    }
+    public static function countEntries():Int
+    {
+        return entries.size();
+    }
+    public static function listEntryIds():Array<String>
+    {
+        return entries.keys().array();
+    }
+    function log(message:String):Void
+    {
+        trace('[' + registryId + '] ' + message);
+    }
+
+    public static function setEntry(song:String, variation:String, difficulty:String, kc:Int) 
+    {
+        var entryID:String = song + "-" + variation;
         var entry:MultikeyKeyCounts = entries.get(entryID);
-        if (entry == null) {
-            entry = {keyCounts: [difficulty => kc]};
+        if (entry == null) 
+        {
+            entry = {version: KEYCOUNT_DATA_VERSION, keyCounts: [difficulty => kc]};
             entries.set(entryID, entry);
         }
         entry.keyCounts.set(difficulty, kc);
     }
-    public static function fetchEntryRaw(song:String, variation:String) {
-        var entryID:String = song+":"+variation;
+    public static function fetchEntryRaw(song:String, variation:String) 
+    {
+        var entryID:String = song + "-" + variation;
         return entries.get(entryID);
     }
 }
