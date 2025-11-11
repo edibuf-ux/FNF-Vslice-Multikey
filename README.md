@@ -56,23 +56,23 @@ Adds an extra multikey difficulty for certain songs:
 - The multikey data will be stored in ```data/multikeyData/```, with it being named the same as the notestyle
 - You will also need the custom notestyle script that supports multikey, you can find these in ```scripts/notestyles/```, you'll just need to copy from any of the base ones and change the class name and id in super to your notestyle's name/id
 - After you've done that you can start setting up the multikey data to match your notestyle:
-  - Strum idle/static animations are setup with ```staticPrefix``` + ```strumNames```, the index is determined by the ```noteDirectionIndexes``` for each keycount in ```keyData```
-  - Strum press animations are setup with ```pressPrefix``` + ```noteDirections```
-  - Strum confirm animations are setup with ```confirmPrefix``` + ```noteDirections```
-  - note animations are setup with ```notePrefix``` + ```noteDirections```
-  - ```noteColors``` is used for mainly used for internal animation naming, so do whatever you want
-  - ```noteColorsRGB``` is used for colors on the mobile lane control scheme
-  - ```splashData``` and ```holdCoverData``` works similar to regular note styles, but are indexed by the ```noteDirectionIndexes``` for each keycount in ```keyData```
-  - ```keyData``` stores data for each keycount in order:
+  - ```noteDirections``` is used for in-game naming of note animations, each direction should be unique, the max amount of note directions does not need to match the highest key count as multiple directions can be shared
+  - ```noteColorsRGB``` is used for colors on the mobile lane control scheme (for each note direction)
+  - ```noteAnimations```, ```strumStaticAnimations```, ```strumPressAnimations```, ```strumConfirmAnimations```, ```strumConfirmHoldAnimations```, ```splashData``` and ```holdCoverData``` work similar to regular note styles and store the animations of everything for each note direction
+  - ```keyCountData``` stores data for each keycount in order:
     - ```noteDirectionIndexes``` is used to get the animations/data for each lane, it will index the other lists to get its data
     - ```singDirectionIndexes``` is used to set which sing direction is played for that lane (0 = left, 1 = down, 2 = up, 3 = right)
     - everything else should be self explanatory and can be adjusted with a custom editor
    
+- The sustain/hold note spritesheet should also match the max amount of note directions set in the multikey data
 - Offsets for each key count can be fixed with a custom editor that is included the editor list on the main menu
 
 ![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/debug1.jpg)
 
 ![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/debug2.jpg)
+
+### Adding higher key counts?
+Just add another set of data to the end of the ```keyCountData``` for each note style multikey data json, and then edit ```defaultMultikeyControls.json``` in ```data/``` to add another row, then just use the multikey debug menu to fix notestyle offsets.
 
 ### Extra Characters Example
 
