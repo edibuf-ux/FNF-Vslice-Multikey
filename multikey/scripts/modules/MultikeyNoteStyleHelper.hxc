@@ -53,6 +53,7 @@ class MultikeyNoteStyleHelper extends Module
 {
     static var MULTIKEY_DATA_VERSION:Version = "1.0.0";
     static var MULTIKEY_DATA_VERSION_RULE:VersionRule = "1.0.x";
+    static var registeredMultikeyNoteStyles:Array<String> = [];
 
     public function new() 
     {
@@ -60,21 +61,28 @@ class MultikeyNoteStyleHelper extends Module
     }
 
     var _currentID:String = "";
-    public static function initMultikeyData(noteStyle)
+    public static function initMultikeyData(_noteStyle)
     {
-        _currentID = noteStyle.id;
+        _currentID = _noteStyle.id;
 
         var multikeyData:MultikeyNoteStyleData = null;
         var path = Paths.file("data/multikeyData/" + _currentID + ".json");
         if (Assets.exists(path)) {
             multikeyData = Json.parse(Assets.getText(path));
         } else {
-            throwMultikeyError("Missing multikey data json");
+            throwMultikeyError("Missing multikey data json!");
         }
 
         validateMultikeyData(multikeyData);
-        noteStyle.multikeyData = multikeyData;
-        noteStyle.generateMultikeyOffsets();
+        _noteStyle.multikeyData = multikeyData;
+        _noteStyle.generateMultikeyOffsets();
+        registeredMultikeyNoteStyles.push(_noteStyle.id);
+        trace('[MULTIKEY] Successfully loaded multikey data ('+_noteStyle.id+').');
+    }
+
+    public static function isMultikeyNoteStyle(_noteStyle)
+    {
+        return registeredMultikeyNoteStyles.contains(_noteStyle.id);
     }
 
     static function validateMultikeyData(multikeyData) 

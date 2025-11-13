@@ -3,6 +3,8 @@ import funkin.play.notes.Strumline;
 import funkin.play.notes.SustainTrail;
 import funkin.ui.debug.charting.ChartEditorState;
 
+import MultikeyNoteStyleHelper;
+
 class MultikeySustainFixer {
     public static function fixSustain(sustain, noteStyle, maxColors, inCharter = false) {
         if (sustain.graphic == null) return;
@@ -15,13 +17,14 @@ class MultikeySustainFixer {
             sustain.zoom *= noteStyle.fetchHoldNoteScale();
             sustain.zoom *= 0.7;
             sustain.zoom *= ChartEditorState.GRID_SIZE / Strumline.STRUMLINE_SIZE;
-            sustain.zoom /= noteStyle.scriptCall("getMultikeyNoteScale");
+
+            if (MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle)) sustain.zoom /= noteStyle.scriptCall("getMultikeyNoteScale");
         }
 
         sustain.graphicWidth = sustain.graphic.width / maxColorsDoubled * sustain.zoom;
         sustain.graphicHeight = SustainTrail.sustainHeight(sustain.sustainLength, sustain.parentStrumline?.scrollSpeed ?? 1.0);
 
-        var dir = noteStyle.scriptCall("getMultikeyNoteDirectionIndex", [sustain.noteDirection]);
+        var dir = MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle) ? noteStyle.scriptCall("getMultikeyNoteDirectionIndex", [sustain.noteDirection]) : sustain.noteDirection;
         var vertices = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
         var uvtData = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 

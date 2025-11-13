@@ -18,6 +18,7 @@ import funkin.util.HostPlatform;
 import funkin.util.FileUtil;
 import funkin.util.Constants;
 import funkin.util.SerializerUtil;
+import funkin.util.WindowUtil;
 import funkin.ui.FullScreenScaleMode;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.charting.handlers.ChartEditorThemeHandler;
@@ -34,6 +35,7 @@ import StringTools;
 import MultikeyMobileControlScheme;
 import MultikeyKeyCountRegistry;
 import MultikeySustainFixer;
+import MultikeyNoteStyleHelper;
 
 class Multikey extends Module
 {
@@ -85,7 +87,7 @@ class Multikey extends Module
 
         if (Std.isOfType(e.targetState, ChartEditorState)) 
         {
-            charterPostCreate(e.targetState);
+            charterUpdateGrid(e.targetState);
             initKeyCountToolbox(e.targetState);
         }
 	}
@@ -144,6 +146,17 @@ class Multikey extends Module
 
     public function setupMultikeyStrumlines(state, retry = false) 
     {
+        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(state.noteStyle)) {
+            if (Strumline.KEY_COUNT != 4) throw 'Notestyle "' + state.noteStyle.id + '" does not support multikey!';
+            return;
+        }
+
+        var maxKeyCount = state.noteStyle.scriptCall("getMaxKeyCount");
+        if (Strumline.KEY_COUNT > maxKeyCount) {
+            setKeyCount(4);
+            WindowUtil.showError('Multikey Error!', 'Key count is too high!\nReverting to 4K!');
+        }
+
         state.playerStrumline.destroy();
         state.opponentStrumline.destroy();
 
@@ -328,10 +341,10 @@ class Multikey extends Module
     var _lastVariation = "";
     var _lastDifficulty = "";
 
-    function charterPostCreate(state) {
+    function charterUpdateGrid(state) {
 
         ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = Strumline.KEY_COUNT * 2 + 1;
-        ChartEditorThemeHandler.updateGridBitmap(state);
+        ChartEditorThemeHandler.updateTheme(state);
         state.gridTiledSprite.width = state.gridBitmap.width;
 
         var i = 0;
@@ -383,6 +396,7 @@ class Multikey extends Module
             if (StringTools.startsWith(noteSprite.animation.name, "tap")) 
             {    
                 var noteStyle = NoteStyleRegistry.instance.fetchEntry(noteSprite.noteStyle);
+                if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle)) continue;
                 var prefix = FunkinStringTools.toTitleCase(noteStyle.id);
                 var noteName = noteStyle.scriptCall("getMultikeyNoteDirectionName", [noteSprite.noteData.data]);
                 var noteIndex = noteStyle.scriptCall("getMultikeyNoteDirectionIndex", [noteSprite.noteData.data]);
@@ -436,7 +450,7 @@ class Multikey extends Module
             if (updateSustainStuff) 
             {
                 var noteStyle = NoteStyleRegistry.instance.fetchEntry(holdNoteSprite.noteStyle);
-                var maxNoteDirections = noteStyle.scriptCall("getMaxNoteDirections");
+                var maxNoteDirections = MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle) ? noteStyle.scriptCall("getMaxNoteDirections") : 4;
 
                 if (holdNoteSprite.noteData != null) holdNoteSprite.noteDirection = holdNoteSprite.noteData.data % Strumline.KEY_COUNT;
                 MultikeySustainFixer.fixSustain(holdNoteSprite, noteStyle, maxNoteDirections, true);
@@ -476,7 +490,7 @@ class Multikey extends Module
     function setCharterKeyCount(k:Int) {
         var state = FlxG.state;
         setKeyCount(k);
-        charterPostCreate(state);
+        charterUpdateGrid(state);
         charterVisibleHoldNoteSpriteData = [];
         
         //force note positions to update

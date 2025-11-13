@@ -35,13 +35,14 @@ class MultikeyDebugStateLoader extends Module
 		if (Std.isOfType(e.targetState, DebugMenuSubState)) {
             
             var state = e.targetState;
-
             state.createItem("MULTIKEY DEBUG", function() {
                 FlxG.switchState(() -> ScriptedMusicBeatState.init("MultikeyDebugState"));
             });
         }
 	}
 }
+
+//TODO: rework with haxe ui!
 
 class MultikeyDebugState extends MusicBeatState
 {
@@ -88,6 +89,13 @@ class MultikeyDebugState extends MusicBeatState
     function initStrumlines() {
         if (playerStrumline != null) playerStrumline.destroy();
         if (opponentStrumline != null) opponentStrumline.destroy();
+
+        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle)) {
+            var text = "NoteStyle: " + noteStyle.id + " (CAPSLOCK)";
+            text += "\nNo Multikey Data found.";
+            debugText.text = text;
+            return;
+        }
 
         playerStrumline = ScriptedStrumline.init('MultikeyStrumline', noteStyle, false, 1.0);
         opponentStrumline = ScriptedStrumline.init('MultikeyStrumline', noteStyle, false, 1.0);
@@ -141,6 +149,11 @@ class MultikeyDebugState extends MusicBeatState
     }
 
     function changeKeyCount(change:Int) {
+        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle)) {
+            setKeyCount(4);
+            initStrumlines();
+            return;
+        }
         var target = Strumline.KEY_COUNT + change;
         var max = noteStyle.scriptCall("getMaxKeyCount");
         if (target < 1) target = 1;
@@ -293,13 +306,15 @@ class MultikeyDebugState extends MusicBeatState
             FlxG.switchState(() -> new MainMenuState());
         }
 
+        if (FlxG.keys.justPressed.CAPSLOCK) switchNoteStyle(1);
+
+        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(noteStyle)) return;
+
         if (FlxG.keys.justPressed.Q) changeKeyCount(-1);
         if (FlxG.keys.justPressed.E) changeKeyCount(1);
         if (FlxG.keys.justPressed.TAB) switchMode(1);
         if (FlxG.keys.justPressed.D) switchEditMode(1);
         if (FlxG.keys.justPressed.A) switchEditMode(-1);
-
-        if (FlxG.keys.justPressed.CAPSLOCK) switchNoteStyle(1);
 
         if (FlxG.keys.justPressed.UP) editVert(-1);
         if (FlxG.keys.justPressed.DOWN) editVert(1);
