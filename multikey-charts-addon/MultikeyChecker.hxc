@@ -1,0 +1,12 @@
+import funkin.modding.module.Module;
+import funkin.modding.module.ScriptedModule;
+
+class MultikeyChecker extends Module
+{
+    public function new()
+    {
+        super("MultikeyChecker");
+        var moduleList = ScriptedModule.listScriptClasses();
+        if (!moduleList.contains("Multikey")) throw "Unable to find multikey module!\nHave you got the multikey addon loaded?";
+    }
+}
