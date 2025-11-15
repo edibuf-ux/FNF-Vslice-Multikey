@@ -104,8 +104,8 @@ class Multikey extends Module
         {
             setKeyCount(getKeyCount(state));
 
-            //TODO: change this to use maxkeycount im lazy rn
-            ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = 9 * 2 + 1; //weird hack to fix the bitmap, if it starts at a lower number it would never get bigger for whatever reason
+            var noteStyle = NoteStyleRegistry.instance.fetchEntry(state.currentSongNoteStyle);
+            ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = noteStyle.scriptCall("getMaxKeyCount") * 2 + 1; //weird hack to fix the bitmap, if it starts at a lower number it would never get bigger for whatever reason
         }
     }
     override public function onSubStateOpenEnd(event)
@@ -383,6 +383,8 @@ class Multikey extends Module
         _lastSongID = state.currentSongId;
         _lastVariation = state.selectedVariation;
         _lastDifficulty = state.selectedDifficulty;
+
+        state.sortChartData(); //fixes a weird flicker that can appear on first load
     }
 
     var charterVisibleHoldNoteSpriteData = [];
@@ -493,9 +495,17 @@ class Multikey extends Module
         charterUpdateGrid(state);
         charterVisibleHoldNoteSpriteData = [];
         
+        state.noteDisplayDirty = true;
+        state.notePreviewDirty = true;
         //force note positions to update
         state.scrollPositionInPixels = state.scrollPositionInPixels+1;
         state.scrollPositionInPixels = state.scrollPositionInPixels-1;
+
+        for (noteSprite in FlxG.state.renderedNotes.members) 
+        {
+            if (Strumline.KEY_COUNT == 4 || noteSprite == null || noteSprite.noteData == null || !noteSprite.exists || !noteSprite.visible) continue;
+            noteSprite.playNoteAnimation();
+        }
     }
 
     var CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT:String = null;
