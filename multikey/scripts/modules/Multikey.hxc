@@ -162,6 +162,9 @@ class Multikey extends Module
         state.opponentStrumline.setNoteSpacing(state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
         state.playerStrumline.setNoteSpacing(state.noteStyle.scriptCall("getMultikeyNoteSpacing"));
 
+        fixStrumlineBackground(state.opponentStrumline);
+        fixStrumlineBackground(state.playerStrumline);
+
         if (retry) 
         {
             if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes";
@@ -257,6 +260,39 @@ class Multikey extends Module
 
         //set back to original to make sure it doesnt break
         Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
+    }
+
+    private function fixStrumlineBackground(strumline) 
+    {
+        var spacing = strumline.noteStyle.scriptCall("getMultikeyNoteSpacing");
+        var scale = strumline.noteStyle.scriptCall("getMultikeyNoteScale");
+        var isArrows = (FlxG.onMobile) && (Strumline.KEY_COUNT == 4 ? ModStore.get("MultikeyTempOriginalControlScheme") == "Arrows" : FlxG.save.data.multikeyControlScheme == MultikeyMobileControlScheme.ARROWS);
+        var MOBILE_PAD = 100;
+
+        //do it more accurately for multikey instead of using hardcoded numbers
+        if (isArrows && Strumline.KEY_COUNT != 4 && strumline.isPlayer) {
+            final amplification:Float = (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
+            final playerStrumlineScale:Float = ((FlxG.height / FlxG.width) * 1.95) * amplification;
+            final playerNoteSpacing:Float = ((FlxG.height / FlxG.width) * 2.8) * amplification;
+
+            spacing *= playerNoteSpacing;
+            scale *= playerStrumlineScale;
+        }
+
+        var backgroundWidth:Float = (Strumline.KEY_COUNT * Strumline.NOTE_SPACING * spacing) + (Strumline.BACKGROUND_PAD * 2 * scale);
+        if (isArrows && strumline.isPlayer) {
+            if (Strumline.KEY_COUNT == 4) {
+                backgroundWidth = backgroundWidth * 1.84;
+            } else {
+                backgroundWidth += MOBILE_PAD * scale * 2;
+            }
+        }
+
+        strumline.background.setGraphicSize(Std.int(backgroundWidth), FlxG.height);
+        strumline.background.updateHitbox();
+
+        strumline.background.x = -Strumline.BACKGROUND_PAD / scale;
+        if (isArrows && strumline.isPlayer) strumline.background.x -= MOBILE_PAD * scale;
     }
 
     var _regenNoteData:Bool = false;

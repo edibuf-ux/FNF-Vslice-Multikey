@@ -84,14 +84,14 @@ class MultikeyInputHandler extends Module
         //save.bind("MultikeyCustomBinds", "FunkinCrew");
 		controls = save.data.multikeyBinds;
 		if (controls == null || controls.keyboard == null || controls.gamepad == null) {
-			trace("No multikey binds found, using default");
+			trace("[MULTIKEY] No multikey binds found, using default");
 			controls = MultikeyInputHandler.defaultControls;
 			save.data.multikeyBinds = controls;
 			save.flush();
 		}
 
 		if (controls.keyboard.length < MultikeyInputHandler.defaultControls.keyboard.length) {
-			trace("Mismatching multikey keyboard binds, trying to fix");
+			trace("[MULTIKEY] Mismatching multikey keyboard binds, trying to fix");
 			for (i in controls.keyboard.length...MultikeyInputHandler.defaultControls.keyboard.length) {
 				controls.keyboard[i] = MultikeyInputHandler.defaultControls.keyboard[i].copy();
 			}
@@ -99,7 +99,7 @@ class MultikeyInputHandler extends Module
 			save.flush();
 		}
 		if (controls.gamepad.length < MultikeyInputHandler.defaultControls.gamepad.length) {
-			trace("Mismatching multikey gamepad binds, trying to fix");
+			trace("[MULTIKEY] Mismatching multikey gamepad binds, trying to fix");
 			for (i in controls.gamepad.length...MultikeyInputHandler.defaultControls.gamepad.length) {
 				controls.gamepad[i] = MultikeyInputHandler.defaultControls.gamepad[i].copy();
 			}
