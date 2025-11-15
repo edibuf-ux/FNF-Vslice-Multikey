@@ -25,8 +25,6 @@ import funkin.ui.options.ControlsMenu;
 import funkin.ui.options.OptionsState;
 import funkin.util.Constants;
 import funkin.util.InputUtil;
-import funkin.util.PlatformUtil;
-import funkin.util.HostPlatform;
 
 import Std;
 
@@ -51,11 +49,8 @@ class MultikeyOptionsLoader extends Module
         {
 			var state = event.targetState;
 
-            var platform = PlatformUtil.detectHostPlatform();
-            var onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
-
             var prefMenu = state.optionsCodex.pages.get("preferences");
-            if (prefMenu != null && onMobile) {
+            if (prefMenu != null && FlxG.onMobile) {
                 prefMenu.createPrefItemEnum('Multikey Scheme', 'Mobile input control scheme used with non 4K charts.', [
                     "Arrows" => MultikeyMobileControlScheme.ARROWS,
                     "Lanes" => MultikeyMobileControlScheme.LANES

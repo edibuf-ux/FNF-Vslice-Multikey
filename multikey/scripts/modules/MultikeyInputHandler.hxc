@@ -14,8 +14,6 @@ import funkin.play.PlayState;
 import funkin.play.notes.Strumline;
 import funkin.util.Constants;
 import funkin.util.FlxGamepadUtil;
-import funkin.util.PlatformUtil;
-import funkin.util.HostPlatform;
 
 import haxe.Json;
 
@@ -31,16 +29,11 @@ class MultikeyMobileControlScheme
 
 class MultikeyInputHandler extends Module
 {
-	public static var platform:HostPlatform;
-    public static var onMobile:Bool = false;
 	public static var loadedControls = null;
 	public static var defaultControls = null;
     public function new() {
         super("MultikeyInputHandler");
 		MultikeyInputHandler.loadedControls = loadCustomControls();
-
-		platform = PlatformUtil.detectHostPlatform();
-        onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
     }
 
 	function loadDefaultControls() {
@@ -216,7 +209,7 @@ class MultikeyInputHandler extends Module
 
 	var _deviceBinds = [];
 	function setupControlCallbacks() {
-		if (!onMobile || ControlsHandler.usingExternalInputDevice) {
+		if (!FlxG.onMobile || ControlsHandler.usingExternalInputDevice) {
 			removeControlCallbacks(); //just in case
 			FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
 			FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
@@ -244,7 +237,7 @@ class MultikeyInputHandler extends Module
 		createMobileHitboxes(PlayState.instance);
 	}
 	function removeControlCallbacks() {
-		if (onMobile && !ControlsHandler.usingExternalInputDevice) return;
+		if (FlxG.onMobile && !ControlsHandler.usingExternalInputDevice) return;
 		FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
         FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
 
@@ -260,7 +253,7 @@ class MultikeyInputHandler extends Module
 	}
 
 	function createMobileHitboxes(state) {
-		if (!onMobile) return;
+		if (!FlxG.onMobile) return;
 		if (ControlsHandler.usingExternalInputDevice) return;
 
 		//destroy old hitbox
@@ -440,7 +433,7 @@ class MultikeyInputHandler extends Module
         }
     }
 	function onSongRetry(e) {
-		if (onMobile) setupControlCallbacks();
+		if (FlxG.onMobile) setupControlCallbacks();
 		initControls();
 	}
 
@@ -492,7 +485,7 @@ class MultikeyInputHandler extends Module
 			var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
 
 			var ghostMiss = false;
-			if (onMobile) {
+			if (FlxG.onMobile) {
 				ghostMiss = (!PlayState.instance.playerStrumline.mayGhostTap()) && notesInDirection.length == 0;
 			} else {
 				ghostMiss = notesInDirection.length == 0;

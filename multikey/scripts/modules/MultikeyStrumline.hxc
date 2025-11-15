@@ -28,7 +28,6 @@ class MultikeyStrumline extends Strumline {
 
     override function getXPos(direction):Float {
         var pos = 0;
-        //if (Multikey.onMobile && inArrowContorlSchemeMode && isPlayer) pos = noteSpacingScale * 35 * (FlxG.width / FlxG.height) / (FlxG.initialWidth / FlxG.initialHeight);
         var halfKeyCount = Strumline.KEY_COUNT / 2;
         if (direction < halfKeyCount) {
             return (-pos * halfKeyCount) + (direction * Strumline.NOTE_SPACING) * (noteSpacingScale * strumlineScale.x) + noteXOffset;

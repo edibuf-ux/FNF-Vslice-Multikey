@@ -39,15 +39,9 @@ import MultikeyNoteStyleHelper;
 
 class Multikey extends Module
 {
-    public static var platform:HostPlatform;
-    public static var onMobile:Bool = false;
     public function new() 
     {
         super("Multikey");
-
-        //#if mobile doesnt seem to work
-        platform = PlatformUtil.detectHostPlatform();
-        onMobile = platform == HostPlatform.ANDROID || platform == HostPlatform.IOS;
     }
 
     public function setKeyCount(keyCount:Int) 
@@ -70,7 +64,7 @@ class Multikey extends Module
         if (usingMultikey) 
         {
             setKeyCount(4);
-            if (onMobile) 
+            if (FlxG.onMobile) 
             {
                 Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
             }
@@ -174,7 +168,7 @@ class Multikey extends Module
         } 
         else 
         {
-            if (onMobile)
+            if (FlxG.onMobile)
             {
                 ModStore.register("MultikeyTempOriginalControlScheme", Preferences.controlsScheme);
                 if (Strumline.KEY_COUNT != 4) Preferences.controlsScheme = "Four Lanes"; //stops it from crashing
@@ -183,7 +177,7 @@ class Multikey extends Module
     }
 
     function fixMobileArrows(state, retry = false) {
-        if (!onMobile) return;
+        if (!FlxG.onMobile) return;
 
         var isArrows = Strumline.KEY_COUNT == 4 ? ModStore.get("MultikeyTempOriginalControlScheme") == "Arrows" : FlxG.save.data.multikeyControlScheme == MultikeyMobileControlScheme.ARROWS;
 
@@ -220,7 +214,7 @@ class Multikey extends Module
             playerStrumline.y = (FlxG.height - playerStrumline.strumlineNotes.height) * 0.95 - Constants.STRUMLINE_Y_OFFSET;
             if (state.currentChart?.noteStyle != "pixel")
             {
-                if (platform == HostPlatform.ANDROID) playerStrumline.y += 10;
+                if (PlatformUtil.detectHostPlatform() == HostPlatform.ANDROID) playerStrumline.y += 10;
             }
             else
             {
