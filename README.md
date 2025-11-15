@@ -25,6 +25,7 @@ Adds an extra multikey difficulty for certain songs:
 - Visual bug when stretching a sustain in the charter
 - Crash when exiting chart playtest ([probably related to this issue](https://github.com/FunkinCrew/Funkin/issues/4400))
 - Lanes mode on mobile sometimes being weird or crashing
+- Player character animation hold when pressing a key sometimes not working
 
 ## How to use
 
