@@ -22,9 +22,9 @@ Adds an extra multikey difficulty for certain songs:
 ![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/gameplay2.jpg)
 
 ## Known Issues:
-- Notes flickering in the charter (this usually fixes itself after placing a note)
 - Visual bug when stretching a sustain in the charter
 - Crash when exiting chart playtest ([probably related to this issue](https://github.com/FunkinCrew/Funkin/issues/4400))
+- Lanes mode on mobile sometimes being weird or crashing
 
 ## How to use
 
