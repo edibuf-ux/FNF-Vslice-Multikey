@@ -3,10 +3,10 @@
 ![](https://github.com/TheZoroForce240/FNF-Vslice-Multikey/blob/main/github/gameplay1.jpg)
 
 ## Main Mulitkey Addon:
-- Adds 1-9K support
+- Adds 1-9K support (by default but can go as high as you want it to)
 - Custom controls (both keyboard and gamepad)
-- Almost Full Charter support
-- Experimental Mobile support
+- Almost full charter support
+- Experimental mobile support
 	- Includes an option in the settings to switch to the currently unused lanes style as its probably easier to play with on mobile
    	- Using a keyboard/gamepad on mobile is untested and may not work
 
@@ -79,7 +79,7 @@ Just add another set of data to the end of the ```keyCountData``` for each note 
 
 ### Extra Characters Example
 
-The mulitkey script overrides the default character anims, both bf and dad have characterType set to OTHER while multikey is active.
+The mulitkey modules override the default character anims, both bf and dad have characterType set to OTHER while multikey is active.
 
 So doing something like extra characters needs to be done differently
 
