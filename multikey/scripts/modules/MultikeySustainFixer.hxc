@@ -6,7 +6,7 @@ import funkin.ui.debug.charting.ChartEditorState;
 import MultikeyNoteStyleHelper;
 
 class MultikeySustainFixer {
-    public static function fixSustain(sustain, noteStyle, maxColors, inCharter = false) {
+    public static function fixSustain(sustain:SustainTrail, noteStyle:NoteStyle, maxColors:Int, inCharter:Bool = false) {
         if (sustain.graphic == null) return;
         sustain.customVertexData = true;
         

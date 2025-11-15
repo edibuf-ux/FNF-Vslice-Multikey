@@ -15,43 +15,73 @@ class MultikeyCharacterHandler extends Module
         super("MultikeyCharacterHandler");
     }
 
-    public static var disableDefaultDadAnims = false;
-    public static var disableDefaultBFAnims = false;
+    /**
+     * Toggles whether this module should handle dad animations when multikey is enabled.
+     */
+    public static var disableDefaultDadAnims:Bool = false;
 
-    override public function onSongLoaded(event) {
-        if (!PlayState.instance.isMinimalMode) {
+    /**
+     * Toggles whether this module should handle bf animations when multikey is enabled.
+     */
+    public static var disableDefaultBFAnims:Bool = false;
+
+    /**
+     * Gets the matching sing direction index based on the key count.
+     * @param noteDir
+     */
+    public static function getSingAnimationDir(noteDir:Int) 
+    {
+        return PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [noteDir]);
+    }
+    /**
+     * Gets the matching sing direction index based on the key count.
+     * @param note (can be either NoteSprite or SustainTrail)
+     */
+    public static function getNoteSingAnimationDir(note:Dynamic)
+    {
+        return PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [note.noteData.data % Strumline.KEY_COUNT]);
+    }
+    /**
+     * Gets the strumline ID from a note (based on the key count).
+     * @param note (can be either NoteSprite or SustainTrail)
+     */
+    public static function getNoteStrumlineID(note:Dynamic) 
+    {
+        return Math.floor(note.noteData.data / Strumline.KEY_COUNT);
+    }
+    /**
+     * Checks if a note is for the player or not (based on the key count).
+     * @param note (can be either NoteSprite or SustainTrail)
+     */
+    public static function getMustHitNote(note:Dynamic) 
+    {
+        return getNoteStrumlineID(note) == 0;
+    }
+
+    override public function onSongLoaded(event:SongLoadScriptEvent) 
+    {
+        if (!PlayState.instance.isMinimalMode) 
+        {
             PlayState.instance.currentStage.getBoyfriend()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.BF : CharacterType.OTHER;
             PlayState.instance.currentStage.getDad()?.characterType = Strumline.KEY_COUNT == 4 ? CharacterType.DAD : CharacterType.OTHER;
         }
         super.onSongLoaded(event);
     }
 
-    public function onStateChangeBegin(event) {
+    override public function onStateChangeBegin(event:StateChangeScriptEvent) 
+    {
         super.onStateChangeBegin(event);
         MultikeyCharacterHandler.disableDefaultDadAnims = false;
         MultikeyCharacterHandler.disableDefaultBFAnims = false;
     }
 
-    public static function getSingAnimationDir(d) {
-        return PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [d]);
-    }
-    public static function getNoteSingAnimationDir(note) {
-        return PlayState.instance.noteStyle.scriptCall("getMultikeySingDirection", [note.noteData.data % Strumline.KEY_COUNT]);
-    }
-    public static function getNoteStrumlineID(note) {
-        return Math.floor(note.noteData.data / Strumline.KEY_COUNT);
-    }
-    public static function getMustHitNote(note) {
-        return getNoteStrumlineID(note) == 0;
-    }
-
-    //should only be used by this module
-    private static function getCharacterFromNote(note) {
+    private static function getCharacterFromNote(note:Dynamic) 
+    {
         return getNoteStrumlineID(note) == 0 ? (MultikeyCharacterHandler.disableDefaultBFAnims ? null : PlayState.instance.currentStage.getBoyfriend()) : (MultikeyCharacterHandler.disableDefaultDadAnims ? null : PlayState.instance.currentStage.getDad());
     }
 
     //sing anim handling, kinda sucks i have to do it like this
-    override public function onNoteHit(event)
+    override public function onNoteHit(event:HitNoteScriptEvent)
     {
         super.onNoteHit(event);
 
@@ -109,21 +139,21 @@ class MultikeyCharacterHandler extends Module
         PlayState.instance.currentStage.getBoyfriend()?.playSingAnimation(getSingAnimationDir(event.dir), true);
     }
 
-    override function onUpdate(event) {
+    override function onUpdate(event:UpdateScriptEvent) {
         super.onUpdate(event);
-        if (PlayState.instance != null) {
-            handleBFAnimHold();
-        }
+        if (PlayState.instance != null) handleBFAnimHold();
     }
 
 
     function handleBFAnimHold() {
-        if (!PlayState.instance.isMinimalMode && !MultikeyCharacterHandler.disableDefaultBFAnims) {
+        if (!PlayState.instance.isMinimalMode && !MultikeyCharacterHandler.disableDefaultBFAnims) 
+        {
             var inputStatus = ModStore.get("MultikeyInputStatus");
             if (inputStatus == null || !inputStatus.keysHeld.contains(true)) return;
 
             var bf = PlayState.instance.currentStage.getBoyfriend();
-            if (bf != null) {
+            if (bf != null) 
+            {
                 //should be good enough to just keep it held before its supposed to end
                 var targetTime = (bf.singTimeSteps * (Conductor.instance.stepLengthMs / Constants.MS_PER_SEC)) - 0.05;
                 if (bf.holdTimer > targetTime) bf.holdTimer = targetTime;

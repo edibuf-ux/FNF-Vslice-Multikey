@@ -46,7 +46,7 @@ class Multikey extends Module
 
     public function setKeyCount(keyCount:Int) 
     {
-        trace("Setting key count to " + keyCount + "!");
+        trace("[MULTIKEY] Setting key count to " + keyCount + "!");
 
         Strumline.KEY_COUNT = keyCount;
         Strumline.DIRECTIONS = [];
@@ -59,7 +59,7 @@ class Multikey extends Module
     }
 
     var usingMultikey:Bool = false;
-    override function onStateChangeBegin(e) 
+    override function onStateChangeBegin(e:StateChangeScriptEvent) 
     {
         if (usingMultikey) 
         {
@@ -72,7 +72,7 @@ class Multikey extends Module
         FlxG.signals.preStateCreate.addOnce(onStateChange);
 		usingMultikey = false;
 	}
-    override function onStateChangeEnd(e) 
+    override function onStateChangeEnd(e:StateChangeScriptEvent)
     {
 		if (Std.isOfType(e.targetState, PlayState) || Std.isOfType(e.targetState, ChartEditorState)) 
         {
@@ -86,7 +86,8 @@ class Multikey extends Module
         }
 	}
 
-    public function onStateChange(state) 
+    //This is called after new but before create
+    private function onStateChange(state:FlxState)
     {
         if (Std.isOfType(state, PlayState)) 
         {
@@ -102,7 +103,7 @@ class Multikey extends Module
             ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = noteStyle.scriptCall("getMaxKeyCount") * 2 + 1; //weird hack to fix the bitmap, if it starts at a lower number it would never get bigger for whatever reason
         }
     }
-    override public function onSubStateOpenEnd(event)
+    override public function onSubStateOpenEnd(event:SubStateScriptEvent)
     {
         super.onSubStateOpenEnd(event);
         if (Std.isOfType(FlxG.state, ChartEditorState) && PlayState.instance == event.targetState) 
@@ -113,7 +114,7 @@ class Multikey extends Module
         }
     }
 
-    override public function onSongRetry(event)
+    override public function onSongRetry(event:SongRetryEvent)
     {
         super.onSongRetry(event);
 
@@ -122,12 +123,11 @@ class Multikey extends Module
         {
             setKeyCount(keyCount);
             setupMultikeyStrumlines(PlayState.instance, true);
-            
         }
         _regenNoteData = true;
     }
 
-    public function getKeyCount(state) 
+    private function getKeyCount(state:FlxState) 
     {
         if (Std.isOfType(state, ChartEditorState)) 
         {
@@ -138,15 +138,17 @@ class Multikey extends Module
         return MultikeyKeyCountRegistry.fetchEntry(state.currentSong.id, state.currentVariation, state.currentDifficulty);
     }
 
-    public function setupMultikeyStrumlines(state, retry = false) 
+    private function setupMultikeyStrumlines(state:PlayState, retry:Bool = false) 
     {
-        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(state.noteStyle)) {
+        if (!MultikeyNoteStyleHelper.isMultikeyNoteStyle(state.noteStyle)) 
+        {
             if (Strumline.KEY_COUNT != 4) throw 'Notestyle "' + state.noteStyle.id + '" does not support multikey!';
             return;
         }
 
         var maxKeyCount = state.noteStyle.scriptCall("getMaxKeyCount");
-        if (Strumline.KEY_COUNT > maxKeyCount) {
+        if (Strumline.KEY_COUNT > maxKeyCount) 
+        {
             setKeyCount(4);
             WindowUtil.showError('Multikey Error!', 'Key count is too high!\nReverting to 4K!');
         }
@@ -176,7 +178,8 @@ class Multikey extends Module
         }
     }
 
-    function fixMobileArrows(state, retry = false) {
+    private function fixMobileArrows(state:PlayState, retry:Bool = false) 
+    {
         if (!FlxG.onMobile) return;
 
         var isArrows = Strumline.KEY_COUNT == 4 ? ModStore.get("MultikeyTempOriginalControlScheme") == "Arrows" : FlxG.save.data.multikeyControlScheme == MultikeyMobileControlScheme.ARROWS;
@@ -236,12 +239,15 @@ class Multikey extends Module
 
         //reset fade if needed
         var needsFade = playerStrumline.strumlineNotes.members[0].alpha == 0.0;
-        if (needsFade) {
-            for (i in 0...playerStrumline.strumlineNotes.members.length) {
+        if (needsFade) 
+        {
+            for (i in 0...playerStrumline.strumlineNotes.members.length) 
+            {
                 //playerStrumline.strumlineNotes.members[i].y += 10;
                 FlxTween.cancelTweensOf(playerStrumline.strumlineNotes.members[i]);
             }
-            for (i in 0...opponentStrumline.strumlineNotes.members.length) {
+            for (i in 0...opponentStrumline.strumlineNotes.members.length) 
+            {
                 //opponentStrumline.strumlineNotes.members[i].y += 10;
                 FlxTween.cancelTweensOf(opponentStrumline.strumlineNotes.members[i]);
             }
@@ -253,8 +259,8 @@ class Multikey extends Module
         Preferences.controlsScheme = ModStore.get("MultikeyTempOriginalControlScheme");
     }
 
-    var _regenNoteData = false;
-    function onUpdate(event)
+    var _regenNoteData:Bool = false;
+    function onUpdate(event:UpdateScriptEvent)
     {
         super.onUpdate(event);
 
@@ -272,8 +278,8 @@ class Multikey extends Module
         }
     }
 
-    function fixChart() {
-        trace("Regenerating notes for multikey");
+    private function fixChart() {
+        trace("[MULTIKEY] Reloading note data for multikey...");
         PlayState.instance.playerStrumline.clean();
         PlayState.instance.opponentStrumline.clean();
 
@@ -305,7 +311,7 @@ class Multikey extends Module
     }
 
     
-    override public function onNoteHit(event)
+    override public function onNoteHit(event:HitNoteScriptEvent)
     {
         super.onNoteHit(event);
 
@@ -330,12 +336,13 @@ class Multikey extends Module
     }
 
     ///////////////////////////
+    //charter related stuff
 
     var _lastSongID = "";
     var _lastVariation = "";
     var _lastDifficulty = "";
 
-    function charterUpdateGrid(state) {
+    function charterUpdateGrid(state:ChartEditorState) {
 
         ChartEditorThemeHandler.TOTAL_COLUMN_COUNT = Strumline.KEY_COUNT * 2 + 1;
         ChartEditorThemeHandler.updateTheme(state);
@@ -381,7 +388,7 @@ class Multikey extends Module
         state.sortChartData(); //fixes a weird flicker that can appear on first load
     }
 
-    var charterVisibleHoldNoteSpriteData = [];
+    var charterVisibleHoldNoteSpriteData:Array<ChartEditorVisibleHoldNoteData> = [];
     function charterUpdate() {
         updateCharterKeyCount();
 
@@ -434,7 +441,8 @@ class Multikey extends Module
             else 
             {
                 updateSustainStuff = true;
-                foundData = {
+                foundData = 
+                {
                     holdNoteSprite: holdNoteSprite,
                     sustainLength: holdNoteSprite.sustainLength,
                     noteDirection: holdNoteSprite.noteData.data,
@@ -454,10 +462,7 @@ class Multikey extends Module
 
                 foundData.sustainLength = holdNoteSprite.sustainLength;
                 foundData.noteDirection = holdNoteSprite.noteData.data;
-
-                //trace("update sustain " + Timer.stamp() + " : " + charterVisibleHoldNoteSpriteData.length);
             }
-
         }
 
         for (data in charterVisibleHoldNoteSpriteData) 
@@ -466,14 +471,15 @@ class Multikey extends Module
         }
     }
 
-    function updateCharterKeyCount() {
+    function updateCharterKeyCount() 
+    {
         var state = FlxG.state;
-        if (_lastSongID != state.currentSongId || _lastVariation != state.selectedVariation || _lastDifficulty != state.selectedDifficulty) {
-            
+        if (_lastSongID != state.currentSongId || _lastVariation != state.selectedVariation || _lastDifficulty != state.selectedDifficulty) 
+        {
             var oldKeyCount = Strumline.KEY_COUNT;
             var newKeyCount = MultikeyKeyCountRegistry.fetchEntry(state.currentSongId, state.selectedVariation, state.selectedDifficulty);
-
-            if (newKeyCount != oldKeyCount) {
+            if (newKeyCount != oldKeyCount) 
+            {
                 setCharterKeyCount(newKeyCount);
                 refreshKeyCountToolbox();
             }
@@ -483,7 +489,8 @@ class Multikey extends Module
             _lastDifficulty = state.selectedDifficulty;
         }
     }
-    function setCharterKeyCount(k:Int) {
+    function setCharterKeyCount(k:Int) 
+    {
         var state = FlxG.state;
         setKeyCount(k);
         charterUpdateGrid(state);
@@ -507,8 +514,8 @@ class Multikey extends Module
     var keycountToolboxInputKeycount = null;
     var keycountToolboxSave = null;
     var keycountToolboxLabelKeycount = null;
-
     var keycountMenuButton = null;
+
     function initKeyCountToolbox(state) {
         CHART_EDITOR_TOOLBOX_KEYCOUNT_LAYOUT = Paths.ui('chart-editor/toolbox/keycounts');
 
@@ -520,7 +527,6 @@ class Multikey extends Module
         keycountToolboxLabelKeycount = keycountToolbox.findComponent("labelKeycount");
         keycountToolboxInputKeycount = keycountToolbox.findComponent("inputKeycount");
         keycountToolboxInputKeycount.onChange = function(event) {
-            trace(keycountToolboxInputKeycount.value);
             if (keycountToolboxInputKeycount.value != Strumline.KEY_COUNT) {
                 setCharterKeyCount(keycountToolboxInputKeycount.value);
                 MultikeyKeyCountRegistry.setEntry(_lastSongID, _lastVariation, _lastDifficulty, Strumline.KEY_COUNT);
@@ -554,4 +560,12 @@ class Multikey extends Module
         keycountToolboxInputKeycount.value = Strumline.KEY_COUNT;
         keycountToolboxLabelKeycount.text = "Key Count for " + FlxG.state.playbarDifficulty.text;
     }
+}
+
+typedef ChartEditorVisibleHoldNoteData = 
+{
+    var holdNoteSprite:ChartEditorHoldNoteSprite;
+    var sustainLength:Float;
+    var noteDirection:Int;
+    var seenThisFrame:Bool;
 }

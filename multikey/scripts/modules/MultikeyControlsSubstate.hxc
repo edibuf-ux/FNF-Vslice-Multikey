@@ -39,10 +39,10 @@ class MultikeyOptionsLoader extends Module
     {
         super("MultikeyOptionsLoader");
 
-        if (FlxG.save.data.multikeyControlScheme == null) FlxG.save.data.multikeyControlScheme = 0;
+        if (FlxG.save.data.multikeyControlScheme == null) FlxG.save.data.multikeyControlScheme = MultikeyMobileControlScheme.ARROWS;
 	}
 
-	override function onStateChangeEnd(event)
+	override function onStateChangeEnd(event:StateChangeScriptEvent)
     {
         super.onStateChangeEnd(event);
         if(Std.isOfType(event.targetState, OptionsState))

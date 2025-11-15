@@ -27,10 +27,19 @@ class MultikeyMobileControlScheme
 	public static var LANES:String = 1;
 }
 
+//array for keycounts -> array for controls -> array for each binding 
+//typedef MultikeyControlSet = Array<Array<Array<String>>>;
+typedef MultikeyControls = 
+{
+	var keyboard:MultikeyControlSet;
+
+	var gamepad:MultikeyControlSet;
+}
+
 class MultikeyInputHandler extends Module
 {
-	public static var loadedControls = null;
-	public static var defaultControls = null;
+	public static var loadedControls:MultikeyControls = null;
+	public static var defaultControls:MultikeyControls = null;
     public function new() {
         super("MultikeyInputHandler");
 		MultikeyInputHandler.loadedControls = loadCustomControls();
@@ -68,7 +77,7 @@ class MultikeyInputHandler extends Module
 	}
 
 	function loadCustomControls() {
-		var controls = null;
+		var controls:MultikeyControls = null;
 		MultikeyInputHandler.defaultControls = loadDefaultControls();
 
 		var save = FlxG.save;
